@@ -819,15 +819,6 @@ CHECK TABLE patients, medical_records;
 
 - **Email**: support@simrs.com
 - **Documentation**: https://docs.simrs.com
-- **Bug Report**: https://github.com/yourorg/simrs/issues
+- **Bug Report**: https://github.com/agstaldhi/simrs/issues
 
 ---
-
-## 📄 License
-
-MIT License - lihat file LICENSE untuk detail
-
----
-
-**Versi Dokumentasi**: 1.0.0  
-**Terakhir Update**: 2024-01-01
