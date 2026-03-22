@@ -94,19 +94,11 @@ set_exception_handler(function ($exception) {
     }
 });
 
-// Load core classes
-require_once APP_PATH . '/core/Database.php';
-require_once APP_PATH . '/core/Session.php';
-require_once APP_PATH . '/core/CSRF.php';
-require_once APP_PATH . '/core/Auth.php';
-require_once APP_PATH . '/core/Controller.php';
-require_once APP_PATH . '/core/Model.php';
-require_once APP_PATH . '/core/Validator.php';
-require_once APP_PATH . '/core/Router.php';
-require_once APP_PATH . '/core/App.php';
-
 // Load helper functions
 require_once APP_PATH . '/helpers/functions.php';
+
+// Load Autoloader
+require_once APP_PATH . '/core/Autoloader.php';
 
 // Initialize session
 Session::init();

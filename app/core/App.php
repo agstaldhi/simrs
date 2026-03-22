@@ -22,8 +22,17 @@ class App
 
         // Check if controller exists
         if (isset($url[0])) {
-            $controllerName = ucfirst($url[0]) . 'Controller';
-            $controllerFile = __DIR__ . '/../modules/' . $url[0] . '/' . $controllerName . '.php';
+            // Sanitize module name to prevent path traversal (LFI)
+            $moduleName = preg_replace('/[^a-zA-Z0-9_-]/', '', $url[0]);
+            
+            // If the module name is effectively empty after sanitization, show 404
+            if (empty($moduleName) || $moduleName !== $url[0]) {
+                $this->show404();
+                return;
+            }
+
+            $controllerName = ucfirst($moduleName) . 'Controller';
+            $controllerFile = __DIR__ . '/../modules/' . $moduleName . '/' . $controllerName . '.php';
 
             if (file_exists($controllerFile)) {
                 $this->controller = $controllerName;

@@ -37,8 +37,8 @@ class Controller
      */
     protected function view($view, $data = [], $useLayout = true)
     {
-        // Extract data array to variables
-        extract($data);
+        // Extract data array to variables safely (prevent overwriting local variables)
+        extract($data, EXTR_SKIP);
 
         // Start output buffering
         ob_start();

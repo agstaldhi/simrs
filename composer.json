@@ -1,0 +1,14 @@
+{
+    "name": "agstaldhi/simrs",
+    "description": "Sistem Informasi Manajemen Rumah Sakit",
+    "type": "project",
+    "autoload": {
+        "classmap": [
+            "app/core/",
+            "app/modules/"
+        ],
+        "files": [
+            "app/helpers/functions.php"
+        ]
+    }
+}

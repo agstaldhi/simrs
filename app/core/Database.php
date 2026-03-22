@@ -125,10 +125,18 @@ class Database
      */
     public static function insert($table, $data)
     {
+        // Sanitize table name
+        $table = '`' . preg_replace('/[^a-zA-Z0-9_]/', '', $table) . '`';
+        
         $fields = array_keys($data);
         $values = array_values($data);
 
-        $fieldList = implode(', ', $fields);
+        // Sanitize field names
+        $sanitizedFields = array_map(function($field) {
+            return '`' . preg_replace('/[^a-zA-Z0-9_]/', '', $field) . '`';
+        }, $fields);
+
+        $fieldList = implode(', ', $sanitizedFields);
         $placeholders = implode(', ', array_fill(0, count($fields), '?'));
 
         $query = "INSERT INTO {$table} ({$fieldList}) VALUES ({$placeholders})";
@@ -148,17 +156,22 @@ class Database
      */
     public static function update($table, $data, $where)
     {
+        // Sanitize table name
+        $table = '`' . preg_replace('/[^a-zA-Z0-9_]/', '', $table) . '`';
+        
         $setClause = [];
         $values = [];
 
         foreach ($data as $field => $value) {
-            $setClause[] = "{$field} = ?";
+            $sanitizedField = '`' . preg_replace('/[^a-zA-Z0-9_]/', '', $field) . '`';
+            $setClause[] = "{$sanitizedField} = ?";
             $values[] = $value;
         }
 
         $whereClause = [];
         foreach ($where as $field => $value) {
-            $whereClause[] = "{$field} = ?";
+            $sanitizedField = '`' . preg_replace('/[^a-zA-Z0-9_]/', '', $field) . '`';
+            $whereClause[] = "{$sanitizedField} = ?";
             $values[] = $value;
         }
 
@@ -178,11 +191,15 @@ class Database
      */
     public static function delete($table, $where)
     {
+        // Sanitize table name
+        $table = '`' . preg_replace('/[^a-zA-Z0-9_]/', '', $table) . '`';
+        
         $whereClause = [];
         $values = [];
 
         foreach ($where as $field => $value) {
-            $whereClause[] = "{$field} = ?";
+            $sanitizedField = '`' . preg_replace('/[^a-zA-Z0-9_]/', '', $field) . '`';
+            $whereClause[] = "{$sanitizedField} = ?";
             $values[] = $value;
         }
 
