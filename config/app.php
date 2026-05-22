@@ -9,13 +9,13 @@ return [
     'app_name' => 'SIMRS - Sistem Informasi Manajemen Rumah Sakit',
 
     // Application URL
-    'app_url' => getenv('APP_URL') ?: 'http://localhost',
+    'app_url' => getenv('APP_URL') ?: 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'),
 
     // Environment: development, testing, production
-    'environment' => getenv('APP_ENV') ?: 'production',
+    'environment' => getenv('APP_ENV') ?: 'development',
 
     // Debug mode
-    'debug' => getenv('APP_DEBUG') === 'true' ? true : false,
+    'debug' => getenv('APP_DEBUG') !== 'false' ? true : false,
 
     // Timezone
     'timezone' => 'Asia/Jakarta',

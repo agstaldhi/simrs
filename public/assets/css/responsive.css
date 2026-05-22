@@ -217,6 +217,7 @@
 
 .login-page {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
@@ -231,25 +232,26 @@
 
 .login-box {
   background: var(--white);
-  padding: var(--spacing-xl);
+  padding: var(--spacing-lg);
   border-radius: var(--border-radius);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  width: 100%;
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 .login-logo {
-  height: 70px;
+  height: 52px;
   width: auto;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
 .login-title {
-  font-size: 2rem;
-  margin-bottom: var(--spacing-xs);
+  font-size: 1.5rem;
+  margin-bottom: 2px;
   color: var(--primary-color);
 }
 
@@ -260,7 +262,7 @@
 }
 
 .login-form {
-  margin-top: var(--spacing-lg);
+  margin-top: var(--spacing-md);
 }
 
 .login-links {
@@ -286,8 +288,11 @@
 }
 
 .login-footer {
+  position: fixed;
+  bottom: var(--spacing-md);
+  left: 0;
+  right: 0;
   text-align: center;
-  margin-top: var(--spacing-lg);
   color: var(--white);
   font-size: 13px;
 }

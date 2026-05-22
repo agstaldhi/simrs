@@ -1,9 +1,5 @@
 # SIMRS - Sistem Informasi Manajemen Rumah Sakit
 
-![SIMRS](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![PHP](https://img.shields.io/badge/PHP-8.0+-purple.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-
 Aplikasi web full-stack untuk manajemen rumah sakit yang dibangun dengan PHP Native, PDO, dan arsitektur modular.
 
 ## 📋 Fitur Utama
@@ -176,60 +172,7 @@ chmod -R 777 public/uploads/
 sudo chown -R www-data:www-data /var/www/simrs
 ```
 
-#### 5. Setup Virtual Host
-
-**Apache:**
-
-```apache
-<VirtualHost *:80>
-    ServerName simrs.local
-    DocumentRoot /var/www/simrs/public
-
-    <Directory /var/www/simrs/public>
-        Options -Indexes +FollowSymLinks
-        AllowOverride All
-        Require all granted
-    </Directory>
-
-    ErrorLog ${APACHE_LOG_DIR}/simrs_error.log
-    CustomLog ${APACHE_LOG_DIR}/simrs_access.log combined
-</VirtualHost>
-```
-
-**Nginx:**
-
-```nginx
-server {
-    listen 80;
-    server_name simrs.local;
-    root /var/www/simrs/public;
-    index index.php;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-}
-```
-
-#### 6. Restart Web Server
-
-```bash
-# Apache
-sudo systemctl restart apache2
-
-# Nginx + PHP-FPM
-sudo systemctl restart nginx
-sudo systemctl restart php8.1-fpm
-```
-
-#### 7. Setup Backup Otomatis
+#### 5. Setup Backup Otomatis
 
 ```bash
 # Make script executable
@@ -391,24 +334,6 @@ max_connections = 200
 query_cache_size = 64M
 ```
 
-## 🤝 Contributing
-
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-## 📄 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Developer
-
-Developed with ❤️ for improving healthcare management systems.
-
-## 📞 Support
-
-- **Email**: aldhiagst@gmail.com
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/agstaldhi/simrs/issues)
-
 ## 🗺️ Roadmap
 
 - [ ] Email notifications
@@ -419,8 +344,3 @@ Developed with ❤️ for improving healthcare management systems.
 - [ ] BPJS integration
 - [ ] Lab equipment integration
 - [ ] Multi-language support
-
----
-
-**Version**: 1.0.0  
-**Last Updated**: Mei 2024

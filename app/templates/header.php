@@ -14,71 +14,14 @@ $hospitalName = config('app.app_name', 'SIMRS');
         <div class="header-logo">
             <a href="<?= url('dashboard') ?>">
                 <img src="<?= asset('images/logo.png') ?>" alt="Logo SIMRS" class="logo-img">
-                <span class="logo-text"><?= e($hospitalName) ?></span>
+                <div class="logo-text-group">
+                    <span class="logo-text"><?= e($hospitalName) ?></span>
+                    <span class="logo-subtitle">Sistem Informasi Manajemen Rumah Sakit</span>
+                </div>
             </a>
         </div>
 
         <?php if ($user): ?>
-            <!-- Desktop Navigation -->
-            <nav class="header-nav desktop-nav" role="navigation">
-                <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a href="<?= url('dashboard') ?>" class="nav-link <?= activeClass('dashboard') ?>">
-                            Dashboard
-                        </a>
-                    </li>
-
-                    <?php if (Auth::can('patients.view')): ?>
-                        <li class="nav-item">
-                            <a href="<?= url('patient') ?>" class="nav-link <?= activeClass('patient') ?>">
-                                Pasien
-                            </a>
-                        </li>
-                    <?php endif; ?>
-
-                    <?php if (Auth::can('appointments.view')): ?>
-                        <li class="nav-item">
-                            <a href="<?= url('appointment') ?>" class="nav-link <?= activeClass('appointment') ?>">
-                                Appointment
-                            </a>
-                        </li>
-                    <?php endif; ?>
-
-                    <?php if (Auth::can('medical_records.view')): ?>
-                        <li class="nav-item">
-                            <a href="<?= url('medical-record') ?>" class="nav-link <?= activeClass('medical-record') ?>">
-                                Rekam Medis
-                            </a>
-                        </li>
-                    <?php endif; ?>
-
-                    <?php if (Auth::can('lab.view_orders')): ?>
-                        <li class="nav-item">
-                            <a href="<?= url('laboratory') ?>" class="nav-link <?= activeClass('laboratory') ?>">
-                                Laboratorium
-                            </a>
-                        </li>
-                    <?php endif; ?>
-
-                    <?php if (Auth::can('pharmacy.view_prescriptions')): ?>
-                        <li class="nav-item">
-                            <a href="<?= url('pharmacy') ?>" class="nav-link <?= activeClass('pharmacy') ?>">
-                                Farmasi
-                            </a>
-                        </li>
-                    <?php endif; ?>
-
-                    <?php if (Auth::can('billing.view_invoices')): ?>
-                        <li class="nav-item">
-                            <a href="<?= url('billing') ?>" class="nav-link <?= activeClass('billing') ?>">
-                                Billing
-                            </a>
-                        </li>
-                    <?php endif; ?>
-                </ul>
-            </nav>
-
-            <!-- User Menu -->
             <div class="header-user">
                 <div class="user-dropdown">
                     <button class="user-button" aria-haspopup="true" aria-expanded="false">
@@ -123,4 +66,4 @@ $hospitalName = config('app.app_name', 'SIMRS');
             </div>
         <?php endif; ?>
     </div>
-</header>
+</header>

@@ -56,19 +56,7 @@
 
   overlay.addEventListener("click", closeMenu);
 
-  // Handle submenu toggle
-  const menuItems = document.querySelectorAll(".menu-item.has-submenu");
 
-  menuItems.forEach((item) => {
-    const menuLink = item.querySelector(".menu-link");
-
-    if (menuLink) {
-      menuLink.addEventListener("click", function (e) {
-        e.preventDefault();
-        item.classList.toggle("open");
-      });
-    }
-  });
 
   // Close menu on window resize (desktop)
   let resizeTimer;

@@ -9,20 +9,35 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Audit & Logs
+DROP TABLE IF EXISTS system_logs;
+DROP TABLE IF EXISTS backups;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS system_settings;
 DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS login_attempts;
 
 -- HR & Kepegawaian
+DROP TABLE IF EXISTS payrolls;
+DROP TABLE IF EXISTS overtimes;
+DROP TABLE IF EXISTS leaves;
+DROP TABLE IF EXISTS employee_shifts;
 DROP TABLE IF EXISTS attendances;
 DROP TABLE IF EXISTS shifts;
 DROP TABLE IF EXISTS employees;
 
 -- Billing & Payment
+DROP TABLE IF EXISTS payment_refunds;
 DROP TABLE IF EXISTS payments;
 DROP TABLE IF EXISTS invoice_items;
 DROP TABLE IF EXISTS invoices;
+DROP TABLE IF EXISTS service_tariffs;
 
 -- Inventory & Purchasing
+DROP TABLE IF EXISTS stock_opname_items;
+DROP TABLE IF EXISTS stock_opnames;
+DROP TABLE IF EXISTS inventory_stock_movements;
+DROP TABLE IF EXISTS goods_receipt_items;
+DROP TABLE IF EXISTS goods_receipts;
 DROP TABLE IF EXISTS stock_movements;
 DROP TABLE IF EXISTS purchase_order_items;
 DROP TABLE IF EXISTS purchase_orders;
@@ -30,6 +45,7 @@ DROP TABLE IF EXISTS suppliers;
 DROP TABLE IF EXISTS inventory_items;
 
 -- Pharmacy
+DROP TABLE IF EXISTS medicine_stock_movements;
 DROP TABLE IF EXISTS medicine_stock;
 DROP TABLE IF EXISTS prescription_items;
 DROP TABLE IF EXISTS prescriptions;
@@ -37,12 +53,14 @@ DROP TABLE IF EXISTS medicines;
 
 -- Laboratory
 DROP TABLE IF EXISTS lab_results;
+DROP TABLE IF EXISTS lab_order_items;
 DROP TABLE IF EXISTS lab_orders;
 DROP TABLE IF EXISTS lab_templates;
 
 -- Scheduling & Appointments
 DROP TABLE IF EXISTS queues;
 DROP TABLE IF EXISTS appointments;
+DROP TABLE IF EXISTS schedule_exceptions;
 DROP TABLE IF EXISTS doctor_schedules;
 
 -- Medical Records
@@ -57,6 +75,7 @@ DROP TABLE IF EXISTS patient_visits;
 DROP TABLE IF EXISTS patients;
 
 -- Master Data
+DROP TABLE IF EXISTS doctor_polyclinics;
 DROP TABLE IF EXISTS polyclinics;
 DROP TABLE IF EXISTS doctors;
 DROP TABLE IF EXISTS rooms;

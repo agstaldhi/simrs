@@ -217,7 +217,10 @@ class Router
             list($controller, $method) = explode('@', $handler);
 
             $controllerClass = $controller . 'Controller';
-            $controllerFile = __DIR__ . '/../modules/' . strtolower($controller) . '/' . $controllerClass . '.php';
+            // Konversi PascalCase ke snake_case untuk nama folder
+            // Contoh: MedicalRecord -> medical_record, Hr -> hr
+            $moduleName = strtolower(preg_replace('/([A-Z])/', '_$1', lcfirst($controller)));
+            $controllerFile = __DIR__ . '/../modules/' . $moduleName . '/' . $controllerClass . '.php';
 
             if (file_exists($controllerFile)) {
                 require_once $controllerFile;

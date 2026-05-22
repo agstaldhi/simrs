@@ -14,9 +14,6 @@ $hospitalName = config('app.app_name', 'SIMRS');
             <p class="footer-text">
                 &copy; <?= $year ?> <?= e($hospitalName) ?>. All rights reserved.
             </p>
-            <p class="footer-version">
-                Version <?= config('app.app_version', '1.0.0') ?>
-            </p>
         </div>
     </div>
 </footer>

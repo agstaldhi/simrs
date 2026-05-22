@@ -15,10 +15,10 @@ return [
     'dsn' => getenv('DB_DSN') ?: 'mysql:host=localhost;dbname=simrs;charset=utf8mb4',
 
     // Database username
-    'user' => getenv('DB_USER') ?: 'simrs_user',
+    'user' => getenv('DB_USER') ?: 'root',
 
     // Database password
-    'pass' => getenv('DB_PASS') ?: 'password_kuat_123',
+    'pass' => getenv('DB_PASS') ?: '',
 
     // PDO options
     'options' => [

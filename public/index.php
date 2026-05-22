@@ -133,9 +133,15 @@ if (is_dir($middlewareDir)) {
     }
 }
 
-// Initialize and run application
+// Initialize and run application using the new Router
 try {
-    $app = new App();
+    $router = new Router();
+    require_once APP_PATH . '/routes.php';
+
+    $method = $_SERVER['REQUEST_METHOD'];
+    $url = $_GET['url'] ?? '/';
+
+    $router->dispatch($method, $url);
 } catch (Exception $e) {
     // Log exception
     error_log("Application Error: " . $e->getMessage());

@@ -279,4 +279,79 @@ class DashboardController extends Controller
             'data' => $activities
         ]);
     }
+
+    /**
+     * Show user profile
+     */
+    public function profile()
+    {
+        $this->requireAuth();
+        $user = $this->getCurrentUser();
+        $userData = Database::fetchOne("SELECT * FROM users WHERE id = ?", [$user['id']]);
+
+        $data = [
+            'title' => 'Profil Saya - SIMRS',
+            'user' => $userData
+        ];
+
+        $this->view('dashboard/views/profile', $data);
+    }
+
+    /**
+     * Update user profile
+     */
+    public function updateProfile()
+    {
+        $this->requireAuth();
+
+        if (!isPost()) {
+            $this->redirect('profile');
+        }
+
+        $this->requireCsrf();
+
+        $userId = Auth::id();
+        $fullName = $this->post('full_name');
+        $email = $this->post('email');
+        $phone = $this->post('phone');
+
+        // Validation
+        $errors = $this->validate([
+            'full_name' => $fullName,
+            'email' => $email,
+            'phone' => $phone
+        ], [
+            'full_name' => 'required|min:3',
+            'email' => 'required|email',
+            'phone' => 'required'
+        ]);
+
+        if (!empty($errors)) {
+            $this->setFlash('error', 'Validasi gagal: ' . implode(', ', $errors));
+            $this->redirect('profile');
+        }
+
+        try {
+            Database::update('users', [
+                'full_name' => $fullName,
+                'email' => $email,
+                'phone' => $phone,
+                'updated_at' => date('Y-m-d H:i:s')
+            ], ['id' => $userId]);
+
+            // Update session
+            $_SESSION['full_name'] = $fullName;
+            $_SESSION['email'] = $email;
+
+            // Log audit
+            $this->logAudit('update', 'auth', 'users', $userId, 'Update profil pribadi');
+
+            $this->setFlash('success', 'Profil berhasil diperbarui');
+            $this->redirect('profile');
+        } catch (Exception $e) {
+            error_log("Failed to update profile: " . $e->getMessage());
+            $this->setFlash('error', 'Gagal memperbarui profil');
+            $this->redirect('profile');
+        }
+    }
 }

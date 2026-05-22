@@ -91,24 +91,10 @@
                 </div>
             </form>
 
-            <!-- Info Box -->
-            <div class="login-info">
-                <h3>Informasi Login</h3>
-                <p><strong>Default Admin:</strong></p>
-                <p>Username: admin@simrs.local</p>
-                <p>Password: Admin123!</p>
-
-                <p class="mt-3"><strong>Default Dokter:</strong></p>
-                <p>Username: dokter@simrs.local</p>
-                <p>Password: Dokter123!</p>
-            </div>
-
         </div>
     </div>
 
-    <footer class="login-footer">
-        <p>&copy; <?= date('Y') ?> SIMRS. All rights reserved.</p>
-    </footer>
+
 
 </body>
 

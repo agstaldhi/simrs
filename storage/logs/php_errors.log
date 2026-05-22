@@ -1,0 +1,8 @@
+[22-May-2026 13:29:39 Asia/Jakarta] PHP Fatal error:  Cannot redeclare formatRupiah() (previously declared in D:\Dokumen\VSCode\simrs\app\helpers\functions.php:99) in D:\Dokumen\VSCode\simrs\app\modules\dashboard\views\index.php on line 71
+[22-May-2026 16:13:38 Asia/Jakarta] Application Error: Controller file not found: D:\Dokumen\VSCode\simrs\app\core/../modules/medicalrecord/MedicalRecordController.php
+[22-May-2026 16:14:01 Asia/Jakarta] Application Error: Controller file not found: D:\Dokumen\VSCode\simrs\app\core/../modules/medicalrecord/MedicalRecordController.php
+[22-May-2026 16:14:04 Asia/Jakarta] Application Error: Controller file not found: D:\Dokumen\VSCode\simrs\app\core/../modules/medicalrecord/MedicalRecordController.php
+[22-May-2026 16:24:30 Asia/Jakarta] Application Error: Controller file not found: D:\Dokumen\VSCode\simrs\app\core/../modules/medicalrecord/MedicalRecordController.php
+[22-May-2026 16:24:34 Asia/Jakarta] Application Error: Controller file not found: D:\Dokumen\VSCode\simrs\app\core/../modules/medicalrecord/MedicalRecordController.php
+[22-May-2026 16:26:16 Asia/Jakarta] Application Error: Controller file not found: D:\Dokumen\VSCode\simrs\app\core/../modules/medicalrecord/MedicalRecordController.php
+[22-May-2026 16:26:49 Asia/Jakarta] Application Error: Controller file not found: D:\Dokumen\VSCode\simrs\app\core/../modules/medicalrecord/MedicalRecordController.php

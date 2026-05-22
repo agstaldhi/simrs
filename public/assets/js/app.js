@@ -218,8 +218,9 @@
 
   /**
    * Auto-dismiss alerts
+   * Script berada di akhir body, DOM sudah siap — tidak perlu DOMContentLoaded
    */
-  document.addEventListener("DOMContentLoaded", function () {
+  (function initAlerts() {
     const alerts = document.querySelectorAll(".alert:not(.alert-permanent)");
     alerts.forEach((alert) => {
       setTimeout(() => {
@@ -228,7 +229,48 @@
         setTimeout(() => alert.remove(), 500);
       }, 5000);
     });
-  });
+  })();
+
+  // ============================================
+  // Sidebar Submenu Handler
+  // Hanya arrow (▼) yang toggle submenu.
+  // Klik pada teks/icon menu navigasi secara native via href.
+  // ============================================
+  (function initSidebarSubmenu() {
+    var menuItems = document.querySelectorAll(".menu-item.has-submenu");
+    if (!menuItems.length) return;
+
+    menuItems.forEach(function(item) {
+      // Auto-open jika section ini aktif
+      if (item.classList.contains("active")) {
+        item.classList.add("open");
+      }
+
+      // Hanya pasang listener ke tombol arrow ▼
+      var arrow = item.querySelector(".menu-arrow");
+      if (!arrow) return;
+
+      arrow.addEventListener("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation(); // Jangan bubble ke menu-link
+
+        var isOpen = item.classList.contains("open");
+
+        // Tutup semua submenu lain
+        menuItems.forEach(function(other) {
+          if (other !== item) other.classList.remove("open");
+        });
+
+        // Toggle submenu ini
+        item.classList.toggle("open", !isOpen);
+      });
+    });
+  })();
+
+
+
+
+
 
   /**
    * Confirm delete actions

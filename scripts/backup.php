@@ -11,8 +11,7 @@
  */
 
 // Load configuration
-require_once __DIR__ . '/../config/db.php';
-$config = include __DIR__ . '/../config/db.php';
+$config = require __DIR__ . '/../config/db.php';
 
 // Parse DSN to get database info
 preg_match('/dbname=([^;]+)/', $config['dsn'], $dbMatch);

@@ -321,7 +321,7 @@ INSERT INTO employees (
  (SELECT id FROM departments WHERE code = 'ADMIN'), 'Kepala Administrasi', 'permanent', 'active', '2020-01-01',
  'sarjana', 7500000),
 
-('EMP-1002', 'Rina Wijayanti', 'Jakarta', '1992-03-20', 'female',
+('EMP-1002', '3201011992032002', 'Rina Wijayanti', 'Jakarta', '1992-03-20', 'female',
  'Jl. Thamrin No. 50', 'Jakarta', '021-5551002', '081234561002', 'rina@simrs.local',
  (SELECT id FROM departments WHERE code = 'ADMIN'), 'Staff Administrasi', 'permanent', 'active', '2020-06-01',
  'diploma', 5000000),

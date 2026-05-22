@@ -351,7 +351,7 @@ INSERT INTO users (username, email, password, full_name, phone, is_active, email
 VALUES (
     'admin',
     'admin@simrs.local',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- Admin123!
+    '$2y$10$GG94zgMsrGhMEn20NV/9BusyWTUEbvqVd1hUpSEO1qViPkMWvQ/bG', -- Admin123!
     'Administrator',
     '081234567890',
     1,
@@ -373,7 +373,7 @@ INSERT INTO users (username, email, password, full_name, phone, is_active, email
 VALUES (
     'dokter',
     'dokter@simrs.local',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- Dokter123!
+    '$2y$10$cVvTX.K5vvttGP9ihT/P/uhidg6sid.VflCowjVbRy.k0Rswp/SCa', -- Dokter123!
     'Dr. John Doe, Sp.PD',
     '081234567891',
     1,

@@ -45,7 +45,7 @@ $user = Auth::user();
                 <!-- Master Data (Admin Only) -->
                 <?php if (Auth::hasRole('admin')): ?>
                     <li class="menu-item has-submenu">
-                        <a href="#" class="menu-link">
+                        <a href="<?= url('master/hospital') ?>" class="menu-link">
                             <span class="menu-icon">⚙️</span>
                             <span class="menu-text">Master Data</span>
                             <span class="menu-arrow">▼</span>
@@ -62,7 +62,7 @@ $user = Auth::user();
                 <!-- Patient Management -->
                 <?php if (Auth::can('patients.view')): ?>
                     <li class="menu-item has-submenu <?= activeClass('patient') ?>">
-                        <a href="#" class="menu-link">
+                        <a href="<?= url('patient') ?>" class="menu-link">
                             <span class="menu-icon">👤</span>
                             <span class="menu-text">Pasien</span>
                             <span class="menu-arrow">▼</span>
@@ -72,7 +72,6 @@ $user = Auth::user();
                             <?php if (Auth::can('patients.create')): ?>
                                 <li><a href="<?= url('patient/create') ?>">Daftar Pasien Baru</a></li>
                             <?php endif; ?>
-                            <li><a href="<?= url('patient/search') ?>">Cari Pasien</a></li>
                         </ul>
                     </li>
                 <?php endif; ?>
@@ -80,7 +79,7 @@ $user = Auth::user();
                 <!-- Appointment & Queue -->
                 <?php if (Auth::can('appointments.view')): ?>
                     <li class="menu-item has-submenu <?= activeClass('appointment') ?>">
-                        <a href="#" class="menu-link">
+                        <a href="<?= url('appointment') ?>" class="menu-link">
                             <span class="menu-icon">📅</span>
                             <span class="menu-text">Appointment</span>
                             <span class="menu-arrow">▼</span>
@@ -107,7 +106,7 @@ $user = Auth::user();
                 <!-- Laboratory -->
                 <?php if (Auth::can('lab.view_orders')): ?>
                     <li class="menu-item has-submenu <?= activeClass('laboratory') ?>">
-                        <a href="#" class="menu-link">
+                        <a href="<?= url('laboratory/orders') ?>" class="menu-link">
                             <span class="menu-icon">🔬</span>
                             <span class="menu-text">Laboratorium</span>
                             <span class="menu-arrow">▼</span>
@@ -123,7 +122,7 @@ $user = Auth::user();
                 <!-- Pharmacy -->
                 <?php if (Auth::can('pharmacy.view_prescriptions')): ?>
                     <li class="menu-item has-submenu <?= activeClass('pharmacy') ?>">
-                        <a href="#" class="menu-link">
+                        <a href="<?= url('pharmacy/prescriptions') ?>" class="menu-link">
                             <span class="menu-icon">💊</span>
                             <span class="menu-text">Farmasi</span>
                             <span class="menu-arrow">▼</span>
@@ -139,7 +138,7 @@ $user = Auth::user();
                 <!-- Billing -->
                 <?php if (Auth::can('billing.view_invoices')): ?>
                     <li class="menu-item has-submenu <?= activeClass('billing') ?>">
-                        <a href="#" class="menu-link">
+                        <a href="<?= url('billing/invoices') ?>" class="menu-link">
                             <span class="menu-icon">💰</span>
                             <span class="menu-text">Billing</span>
                             <span class="menu-arrow">▼</span>
@@ -155,7 +154,7 @@ $user = Auth::user();
                 <!-- Inventory (Admin/Pharmacist) -->
                 <?php if (Auth::can('inventory.view')): ?>
                     <li class="menu-item has-submenu <?= activeClass('inventory') ?>">
-                        <a href="#" class="menu-link">
+                        <a href="<?= url('inventory/items') ?>" class="menu-link">
                             <span class="menu-icon">📦</span>
                             <span class="menu-text">Inventori</span>
                             <span class="menu-arrow">▼</span>
@@ -172,7 +171,7 @@ $user = Auth::user();
                 <!-- HR (Admin/HR Staff) -->
                 <?php if (Auth::can('hr.view_employees')): ?>
                     <li class="menu-item has-submenu <?= activeClass('hr') ?>">
-                        <a href="#" class="menu-link">
+                        <a href="<?= url('hr/employees') ?>" class="menu-link">
                             <span class="menu-icon">👥</span>
                             <span class="menu-text">Kepegawaian</span>
                             <span class="menu-arrow">▼</span>
@@ -189,7 +188,7 @@ $user = Auth::user();
                 <!-- Reports -->
                 <?php if (Auth::can('reports.view')): ?>
                     <li class="menu-item has-submenu <?= activeClass('report') ?>">
-                        <a href="#" class="menu-link">
+                        <a href="<?= url('report/daily') ?>" class="menu-link">
                             <span class="menu-icon">📊</span>
                             <span class="menu-text">Laporan</span>
                             <span class="menu-arrow">▼</span>
@@ -206,7 +205,7 @@ $user = Auth::user();
                 <!-- Settings (Admin Only) -->
                 <?php if (Auth::hasRole('admin')): ?>
                     <li class="menu-item has-submenu <?= activeClass('settings') ?>">
-                        <a href="#" class="menu-link">
+                        <a href="<?= url('settings/general') ?>" class="menu-link">
                             <span class="menu-icon">⚙️</span>
                             <span class="menu-text">Pengaturan</span>
                             <span class="menu-arrow">▼</span>
@@ -220,6 +219,7 @@ $user = Auth::user();
                         </ul>
                     </li>
                 <?php endif; ?>
+
 
             </ul>
         </nav>
