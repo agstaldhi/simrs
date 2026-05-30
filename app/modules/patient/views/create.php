@@ -1,412 +1,302 @@
 <?php
 /**
- * Create patient view
- * Form untuk pendaftaran pasien baru.
+ * Patient Create View
+ * Form pendaftaran pasien baru
  */
 ?>
 
-<div class="create-patient-container mt-3">
+<div class="patients-container mt-3">
 
     <!-- Page Header -->
     <div class="page-header mb-4" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <div>
             <h1 class="font-xl font-bold">➕ Daftar Pasien Baru</h1>
-            <p class="text-muted font-md">Isi formulir di bawah ini untuk mendaftarkan pasien baru ke dalam sistem SIMRS.</p>
+            <p class="text-muted font-md">Isi formulir di bawah ini untuk mendaftarkan pasien baru ke sistem SIMRS.</p>
         </div>
-        <a href="<?= url('patient') ?>" class="btn btn-light btn-accessible-lg" style="text-decoration: none; padding: 12px 24px; border: 1px solid #ccc; font-weight: bold; display: inline-flex; align-items: center; gap: 8px;">
-            ◀ Kembali ke Daftar Pasien
+        <a href="<?= url('patient') ?>" class="btn btn-secondary" style="text-decoration: none; padding: 10px 20px; font-weight: bold;">
+            ← Kembali ke Daftar Pasien
         </a>
     </div>
 
-    <form method="POST" action="<?= url('patient/store') ?>" novalidate>
+    <form action="<?= url('patient/store') ?>" method="POST" id="formDaftarPasien">
         <?= CSRF::getField() ?>
 
-        <!-- ============================================================ -->
-        <!-- SECTION 1: Data Identitas                                     -->
-        <!-- ============================================================ -->
+        <!-- ===================== -->
+        <!-- SECTION: Data Identitas -->
+        <!-- ===================== -->
         <div class="card shadow-sm mb-4">
-            <div class="card-header" style="background-color: #1c7ed6; color: #fff; padding: 14px 20px; border-radius: 4px 4px 0 0;">
-                <h2 class="font-md font-bold mb-0" style="margin: 0;">🪪 Data Identitas Pasien</h2>
+            <div class="card-header" style="background: #f8f9fa; padding: 16px 20px; border-bottom: 2px solid #dee2e6;">
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">👤 Data Identitas Pasien</h3>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body" style="padding: 24px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
-
-                    <!-- NIK -->
                     <div class="form-group">
-                        <label for="nik" class="font-md font-bold mb-1 d-block">NIK (Nomor Induk Kependudukan)</label>
-                        <input type="text" id="nik" name="nik"
-                               value="<?= e(old('nik')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Masukkan 16 digit NIK"
-                               maxlength="16"
-                               style="width: 100%;">
-                        <small class="text-muted font-sm">Kosongkan jika belum memiliki KTP.</small>
+                        <label for="nik" class="form-label">NIK (Nomor Induk Kependudukan)</label>
+                        <input type="text" id="nik" name="nik" class="form-control"
+                               placeholder="16 digit NIK" maxlength="16"
+                               value="<?= e(old('nik')) ?>">
                     </div>
 
-                    <!-- Gelar (Title) -->
                     <div class="form-group">
-                        <label for="title" class="font-md font-bold mb-1 d-block">Gelar / Sapaan <span style="color: #e03131;">*</span></label>
-                        <select id="title" name="title" class="form-control form-control-accessible" style="width: 100%;" required>
-                            <option value="">-- Pilih Gelar --</option>
-                            <option value="Tn"  <?= old('title') === 'Tn'  ? 'selected' : '' ?>>Tn. (Tuan)</option>
-                            <option value="Ny"  <?= old('title') === 'Ny'  ? 'selected' : '' ?>>Ny. (Nyonya)</option>
-                            <option value="Nn"  <?= old('title') === 'Nn'  ? 'selected' : '' ?>>Nn. (Nona)</option>
-                            <option value="An"  <?= old('title') === 'An'  ? 'selected' : '' ?>>An. (Anak)</option>
-                            <option value="By"  <?= old('title') === 'By'  ? 'selected' : '' ?>>By. (Bayi)</option>
+                        <label for="title" class="form-label">Gelar / Sapaan <span style="color: red;">*</span></label>
+                        <select id="title" name="title" class="form-control" required>
+                            <option value="">-- Pilih --</option>
+                            <?php foreach (['Tn', 'Ny', 'Nn', 'By', 'An'] as $t): ?>
+                                <option value="<?= $t ?>" <?= old('title') === $t ? 'selected' : '' ?>><?= $t ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <!-- Nama Lengkap -->
                     <div class="form-group" style="grid-column: span 2;">
-                        <label for="full_name" class="font-md font-bold mb-1 d-block">Nama Lengkap <span style="color: #e03131;">*</span></label>
-                        <input type="text" id="full_name" name="full_name"
-                               value="<?= e(old('full_name')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Masukkan nama lengkap sesuai KTP"
-                               style="width: 100%;"
-                               required>
+                        <label for="full_name" class="form-label">Nama Lengkap <span style="color: red;">*</span></label>
+                        <input type="text" id="full_name" name="full_name" class="form-control"
+                               placeholder="Nama lengkap sesuai KTP" required
+                               value="<?= e(old('full_name')) ?>">
                     </div>
 
-                    <!-- Tempat Lahir -->
                     <div class="form-group">
-                        <label for="birth_place" class="font-md font-bold mb-1 d-block">Tempat Lahir</label>
-                        <input type="text" id="birth_place" name="birth_place"
-                               value="<?= e(old('birth_place')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Contoh: Jakarta"
-                               style="width: 100%;">
+                        <label for="birth_place" class="form-label">Tempat Lahir</label>
+                        <input type="text" id="birth_place" name="birth_place" class="form-control"
+                               placeholder="Kota tempat lahir"
+                               value="<?= e(old('birth_place')) ?>">
                     </div>
 
-                    <!-- Tanggal Lahir -->
                     <div class="form-group">
-                        <label for="birth_date" class="font-md font-bold mb-1 d-block">Tanggal Lahir <span style="color: #e03131;">*</span></label>
-                        <input type="date" id="birth_date" name="birth_date"
-                               value="<?= e(old('birth_date')) ?>"
-                               class="form-control form-control-accessible"
-                               style="width: 100%;"
-                               required>
+                        <label for="birth_date" class="form-label">Tanggal Lahir <span style="color: red;">*</span></label>
+                        <input type="date" id="birth_date" name="birth_date" class="form-control" required
+                               value="<?= e(old('birth_date')) ?>">
                     </div>
 
-                    <!-- Jenis Kelamin -->
                     <div class="form-group">
-                        <label for="gender" class="font-md font-bold mb-1 d-block">Jenis Kelamin <span style="color: #e03131;">*</span></label>
-                        <select id="gender" name="gender" class="form-control form-control-accessible" style="width: 100%;" required>
-                            <option value="">-- Pilih Jenis Kelamin --</option>
+                        <label for="gender" class="form-label">Jenis Kelamin <span style="color: red;">*</span></label>
+                        <select id="gender" name="gender" class="form-control" required>
+                            <option value="">-- Pilih --</option>
                             <option value="male"   <?= old('gender') === 'male'   ? 'selected' : '' ?>>Laki-laki</option>
                             <option value="female" <?= old('gender') === 'female' ? 'selected' : '' ?>>Perempuan</option>
                         </select>
                     </div>
 
-                    <!-- Golongan Darah -->
                     <div class="form-group">
-                        <label for="blood_type" class="font-md font-bold mb-1 d-block">Golongan Darah</label>
-                        <select id="blood_type" name="blood_type" class="form-control form-control-accessible" style="width: 100%;">
-                            <option value="unknown" <?= (old('blood_type', 'unknown') === 'unknown') ? 'selected' : '' ?>>Tidak Diketahui</option>
-                            <option value="A"  <?= old('blood_type') === 'A'  ? 'selected' : '' ?>>A</option>
-                            <option value="B"  <?= old('blood_type') === 'B'  ? 'selected' : '' ?>>B</option>
-                            <option value="AB" <?= old('blood_type') === 'AB' ? 'selected' : '' ?>>AB</option>
-                            <option value="O"  <?= old('blood_type') === 'O'  ? 'selected' : '' ?>>O</option>
+                        <label for="blood_type" class="form-label">Golongan Darah</label>
+                        <select id="blood_type" name="blood_type" class="form-control">
+                            <option value="unknown" <?= old('blood_type', 'unknown') === 'unknown' ? 'selected' : '' ?>>Tidak Diketahui</option>
+                            <?php foreach (['A', 'B', 'AB', 'O'] as $bt): ?>
+                                <option value="<?= $bt ?>" <?= old('blood_type') === $bt ? 'selected' : '' ?>><?= $bt ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <!-- Agama -->
                     <div class="form-group">
-                        <label for="religion" class="font-md font-bold mb-1 d-block">Agama</label>
-                        <select id="religion" name="religion" class="form-control form-control-accessible" style="width: 100%;">
-                            <option value="islam"     <?= (old('religion', 'islam') === 'islam')     ? 'selected' : '' ?>>Islam</option>
-                            <option value="kristen"   <?= old('religion') === 'kristen'              ? 'selected' : '' ?>>Kristen Protestan</option>
-                            <option value="katolik"   <?= old('religion') === 'katolik'              ? 'selected' : '' ?>>Katolik</option>
-                            <option value="hindu"     <?= old('religion') === 'hindu'                ? 'selected' : '' ?>>Hindu</option>
-                            <option value="buddha"    <?= old('religion') === 'buddha'               ? 'selected' : '' ?>>Buddha</option>
-                            <option value="konghucu"  <?= old('religion') === 'konghucu'             ? 'selected' : '' ?>>Konghucu</option>
-                            <option value="lainnya"   <?= old('religion') === 'lainnya'              ? 'selected' : '' ?>>Lainnya</option>
+                        <label for="religion" class="form-label">Agama</label>
+                        <select id="religion" name="religion" class="form-control">
+                            <?php
+                            $religions = ['islam' => 'Islam', 'kristen' => 'Kristen', 'katolik' => 'Katolik',
+                                          'hindu' => 'Hindu', 'buddha' => 'Buddha', 'konghucu' => 'Konghucu', 'lainnya' => 'Lainnya'];
+                            foreach ($religions as $val => $label): ?>
+                                <option value="<?= $val ?>" <?= old('religion', 'islam') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <!-- Pendidikan -->
                     <div class="form-group">
-                        <label for="education" class="font-md font-bold mb-1 d-block">Pendidikan Terakhir</label>
-                        <select id="education" name="education" class="form-control form-control-accessible" style="width: 100%;">
-                            <option value="tidak_sekolah" <?= old('education') === 'tidak_sekolah'   ? 'selected' : '' ?>>Tidak Sekolah</option>
-                            <option value="sd"            <?= old('education') === 'sd'              ? 'selected' : '' ?>>SD</option>
-                            <option value="smp"           <?= old('education') === 'smp'             ? 'selected' : '' ?>>SMP</option>
-                            <option value="sma"           <?= (old('education', 'sma') === 'sma')    ? 'selected' : '' ?>>SMA / SMK</option>
-                            <option value="d3"            <?= old('education') === 'd3'              ? 'selected' : '' ?>>Diploma (D3)</option>
-                            <option value="s1"            <?= old('education') === 's1'              ? 'selected' : '' ?>>Sarjana (S1)</option>
-                            <option value="s2"            <?= old('education') === 's2'              ? 'selected' : '' ?>>Magister (S2)</option>
-                            <option value="s3"            <?= old('education') === 's3'              ? 'selected' : '' ?>>Doktor (S3)</option>
+                        <label for="education" class="form-label">Pendidikan Terakhir</label>
+                        <select id="education" name="education" class="form-control">
+                            <?php
+                            $educations = ['sd' => 'SD', 'smp' => 'SMP', 'sma' => 'SMA/SMK',
+                                           'd3' => 'D3', 's1' => 'S1', 's2' => 'S2', 's3' => 'S3', 'lainnya' => 'Lainnya'];
+                            foreach ($educations as $val => $label): ?>
+                                <option value="<?= $val ?>" <?= old('education', 'sma') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <!-- Status Pernikahan -->
                     <div class="form-group">
-                        <label for="marital_status" class="font-md font-bold mb-1 d-block">Status Pernikahan</label>
-                        <select id="marital_status" name="marital_status" class="form-control form-control-accessible" style="width: 100%;">
-                            <option value="belum_kawin" <?= (old('marital_status', 'belum_kawin') === 'belum_kawin') ? 'selected' : '' ?>>Belum Kawin</option>
-                            <option value="kawin"       <?= old('marital_status') === 'kawin'                        ? 'selected' : '' ?>>Kawin</option>
-                            <option value="cerai_hidup" <?= old('marital_status') === 'cerai_hidup'                  ? 'selected' : '' ?>>Cerai Hidup</option>
-                            <option value="cerai_mati"  <?= old('marital_status') === 'cerai_mati'                   ? 'selected' : '' ?>>Cerai Mati</option>
+                        <label for="marital_status" class="form-label">Status Pernikahan</label>
+                        <select id="marital_status" name="marital_status" class="form-control">
+                            <?php
+                            $statuses = ['belum_kawin' => 'Belum Kawin', 'kawin' => 'Kawin',
+                                         'cerai_hidup' => 'Cerai Hidup', 'cerai_mati' => 'Cerai Mati'];
+                            foreach ($statuses as $val => $label): ?>
+                                <option value="<?= $val ?>" <?= old('marital_status', 'belum_kawin') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <!-- Pekerjaan -->
                     <div class="form-group">
-                        <label for="occupation" class="font-md font-bold mb-1 d-block">Pekerjaan</label>
-                        <input type="text" id="occupation" name="occupation"
-                               value="<?= e(old('occupation')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Contoh: Wiraswasta, PNS, IRT"
-                               style="width: 100%;">
+                        <label for="occupation" class="form-label">Pekerjaan</label>
+                        <input type="text" id="occupation" name="occupation" class="form-control"
+                               placeholder="Pekerjaan pasien"
+                               value="<?= e(old('occupation')) ?>">
                     </div>
 
-                </div><!-- end grid -->
-            </div><!-- end card-body -->
-        </div><!-- end card -->
-
-
-        <!-- ============================================================ -->
-        <!-- SECTION 2: Alamat                                             -->
-        <!-- ============================================================ -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header" style="background-color: #2b8a3e; color: #fff; padding: 14px 20px; border-radius: 4px 4px 0 0;">
-                <h2 class="font-md font-bold mb-0" style="margin: 0;">🏠 Alamat Domisili</h2>
+                </div>
             </div>
-            <div class="card-body p-4">
+        </div>
 
-                <!-- Alamat lengkap -->
+        <!-- ===================== -->
+        <!-- SECTION: Alamat -->
+        <!-- ===================== -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header" style="background: #f8f9fa; padding: 16px 20px; border-bottom: 2px solid #dee2e6;">
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">🏠 Alamat Tempat Tinggal</h3>
+            </div>
+            <div class="card-body" style="padding: 24px;">
                 <div class="form-group mb-3">
-                    <label for="address" class="font-md font-bold mb-1 d-block">Alamat Lengkap (Jalan/Gang/Nomor)</label>
-                    <textarea id="address" name="address"
-                              class="form-control form-control-accessible"
-                              placeholder="Contoh: Jl. Merdeka No. 10, RT 002/RW 005"
-                              rows="3"
-                              style="width: 100%; resize: vertical;"><?= e(old('address')) ?></textarea>
+                    <label for="address" class="form-label">Alamat Lengkap</label>
+                    <textarea id="address" name="address" class="form-control" rows="3"
+                              placeholder="Nama jalan, nomor rumah, dll."><?= e(old('address')) ?></textarea>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px;">
-
-                    <!-- RT -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
                     <div class="form-group">
-                        <label for="rt" class="font-md font-bold mb-1 d-block">RT</label>
-                        <input type="text" id="rt" name="rt"
-                               value="<?= e(old('rt')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Contoh: 002"
-                               maxlength="5"
-                               style="width: 100%;">
+                        <label for="rt" class="form-label">RT</label>
+                        <input type="text" id="rt" name="rt" class="form-control"
+                               placeholder="000" maxlength="3"
+                               value="<?= e(old('rt')) ?>">
                     </div>
-
-                    <!-- RW -->
                     <div class="form-group">
-                        <label for="rw" class="font-md font-bold mb-1 d-block">RW</label>
-                        <input type="text" id="rw" name="rw"
-                               value="<?= e(old('rw')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Contoh: 005"
-                               maxlength="5"
-                               style="width: 100%;">
+                        <label for="rw" class="form-label">RW</label>
+                        <input type="text" id="rw" name="rw" class="form-control"
+                               placeholder="000" maxlength="3"
+                               value="<?= e(old('rw')) ?>">
                     </div>
-
-                    <!-- Kelurahan / Desa -->
                     <div class="form-group">
-                        <label for="kelurahan" class="font-md font-bold mb-1 d-block">Kelurahan / Desa</label>
-                        <input type="text" id="kelurahan" name="kelurahan"
-                               value="<?= e(old('kelurahan')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Nama kelurahan"
-                               style="width: 100%;">
+                        <label for="kelurahan" class="form-label">Kelurahan / Desa</label>
+                        <input type="text" id="kelurahan" name="kelurahan" class="form-control"
+                               placeholder="Kelurahan"
+                               value="<?= e(old('kelurahan')) ?>">
                     </div>
-
-                    <!-- Kecamatan -->
                     <div class="form-group">
-                        <label for="kecamatan" class="font-md font-bold mb-1 d-block">Kecamatan</label>
-                        <input type="text" id="kecamatan" name="kecamatan"
-                               value="<?= e(old('kecamatan')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Nama kecamatan"
-                               style="width: 100%;">
+                        <label for="kecamatan" class="form-label">Kecamatan</label>
+                        <input type="text" id="kecamatan" name="kecamatan" class="form-control"
+                               placeholder="Kecamatan"
+                               value="<?= e(old('kecamatan')) ?>">
                     </div>
-
-                    <!-- Kota / Kabupaten -->
                     <div class="form-group">
-                        <label for="city" class="font-md font-bold mb-1 d-block">Kota / Kabupaten</label>
-                        <input type="text" id="city" name="city"
-                               value="<?= e(old('city')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Nama kota/kabupaten"
-                               style="width: 100%;">
+                        <label for="city" class="form-label">Kota / Kabupaten</label>
+                        <input type="text" id="city" name="city" class="form-control"
+                               placeholder="Kota"
+                               value="<?= e(old('city')) ?>">
                     </div>
-
-                    <!-- Provinsi -->
                     <div class="form-group">
-                        <label for="province" class="font-md font-bold mb-1 d-block">Provinsi</label>
-                        <input type="text" id="province" name="province"
-                               value="<?= e(old('province')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Nama provinsi"
-                               style="width: 100%;">
+                        <label for="province" class="form-label">Provinsi</label>
+                        <input type="text" id="province" name="province" class="form-control"
+                               placeholder="Provinsi"
+                               value="<?= e(old('province')) ?>">
                     </div>
-
-                    <!-- Kode Pos -->
                     <div class="form-group">
-                        <label for="postal_code" class="font-md font-bold mb-1 d-block">Kode Pos</label>
-                        <input type="text" id="postal_code" name="postal_code"
-                               value="<?= e(old('postal_code')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Contoh: 12345"
-                               maxlength="10"
-                               style="width: 100%;">
+                        <label for="postal_code" class="form-label">Kode Pos</label>
+                        <input type="text" id="postal_code" name="postal_code" class="form-control"
+                               placeholder="00000" maxlength="5"
+                               value="<?= e(old('postal_code')) ?>">
                     </div>
-
-                </div><!-- end grid -->
-            </div><!-- end card-body -->
-        </div><!-- end card -->
-
-
-        <!-- ============================================================ -->
-        <!-- SECTION 3: Kontak                                             -->
-        <!-- ============================================================ -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header" style="background-color: #e67700; color: #fff; padding: 14px 20px; border-radius: 4px 4px 0 0;">
-                <h2 class="font-md font-bold mb-0" style="margin: 0;">📞 Informasi Kontak</h2>
+                </div>
             </div>
-            <div class="card-body p-4">
+        </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
-
-                    <!-- Nomor HP (Mobile) -->
-                    <div class="form-group">
-                        <label for="mobile" class="font-md font-bold mb-1 d-block">Nomor HP / WhatsApp <span style="color: #e03131;">*</span></label>
-                        <input type="tel" id="mobile" name="mobile"
-                               value="<?= e(old('mobile')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Contoh: 08123456789"
-                               style="width: 100%;"
-                               required>
-                    </div>
-
-                    <!-- Nomor Telepon Rumah -->
-                    <div class="form-group">
-                        <label for="phone" class="font-md font-bold mb-1 d-block">Nomor Telepon Rumah</label>
-                        <input type="tel" id="phone" name="phone"
-                               value="<?= e(old('phone')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Contoh: 021-1234567"
-                               style="width: 100%;">
-                    </div>
-
-                    <!-- Email -->
-                    <div class="form-group">
-                        <label for="email" class="font-md font-bold mb-1 d-block">Alamat Email</label>
-                        <input type="email" id="email" name="email"
-                               value="<?= e(old('email')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Contoh: pasien@email.com"
-                               style="width: 100%;">
-                    </div>
-
-                </div><!-- end grid -->
-            </div><!-- end card-body -->
-        </div><!-- end card -->
-
-
-        <!-- ============================================================ -->
-        <!-- SECTION 4: Data Jaminan                                       -->
-        <!-- ============================================================ -->
+        <!-- ===================== -->
+        <!-- SECTION: Kontak -->
+        <!-- ===================== -->
         <div class="card shadow-sm mb-4">
-            <div class="card-header" style="background-color: #5c2d91; color: #fff; padding: 14px 20px; border-radius: 4px 4px 0 0;">
-                <h2 class="font-md font-bold mb-0" style="margin: 0;">🛡️ Data Jaminan Kesehatan</h2>
+            <div class="card-header" style="background: #f8f9fa; padding: 16px 20px; border-bottom: 2px solid #dee2e6;">
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">📞 Informasi Kontak</h3>
             </div>
-            <div class="card-body p-4">
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
-
-                    <!-- Jenis Jaminan -->
+            <div class="card-body" style="padding: 24px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
                     <div class="form-group">
-                        <label for="insurance_type" class="font-md font-bold mb-1 d-block">Jenis Jaminan</label>
-                        <select id="insurance_type" name="insurance_type" class="form-control form-control-accessible" style="width: 100%;" onchange="toggleInsuranceNumber(this.value)">
-                            <option value="umum"    <?= (old('insurance_type', 'umum') === 'umum')    ? 'selected' : '' ?>>Umum (Mandiri / Bayar Sendiri)</option>
-                            <option value="bpjs"    <?= old('insurance_type') === 'bpjs'              ? 'selected' : '' ?>>BPJS Kesehatan</option>
-                            <option value="asuransi" <?= old('insurance_type') === 'asuransi'         ? 'selected' : '' ?>>Asuransi Swasta</option>
+                        <label for="phone" class="form-label">Nomor Telepon Rumah</label>
+                        <input type="text" id="phone" name="phone" class="form-control"
+                               placeholder="021xxxxxxxx"
+                               value="<?= e(old('phone')) ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="mobile" class="form-label">Nomor HP / WhatsApp <span style="color: red;">*</span></label>
+                        <input type="text" id="mobile" name="mobile" class="form-control"
+                               placeholder="08xxxxxxxxxx" required
+                               value="<?= e(old('mobile')) ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="form-label">Alamat Email</label>
+                        <input type="email" id="email" name="email" class="form-control"
+                               placeholder="contoh@email.com"
+                               value="<?= e(old('email')) ?>">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== -->
+        <!-- SECTION: Data Jaminan -->
+        <!-- ===================== -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header" style="background: #f8f9fa; padding: 16px 20px; border-bottom: 2px solid #dee2e6;">
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">💳 Data Jaminan Kesehatan</h3>
+            </div>
+            <div class="card-body" style="padding: 24px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div class="form-group">
+                        <label for="insurance_type" class="form-label">Jenis Jaminan</label>
+                        <select id="insurance_type" name="insurance_type" class="form-control">
+                            <?php
+                            $insurances = ['umum' => 'Umum (Mandiri)', 'bpjs' => 'BPJS Kesehatan', 'asuransi' => 'Asuransi Swasta'];
+                            foreach ($insurances as $val => $label): ?>
+                                <option value="<?= $val ?>" <?= old('insurance_type', 'umum') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
-
-                    <!-- Nomor Jaminan / Kartu -->
-                    <div class="form-group" id="insurance-number-wrapper">
-                        <label for="insurance_number" class="font-md font-bold mb-1 d-block">Nomor Kartu / Polis Jaminan</label>
-                        <input type="text" id="insurance_number" name="insurance_number"
-                               value="<?= e(old('insurance_number')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Nomor kartu BPJS atau polis asuransi"
-                               style="width: 100%;">
-                        <small class="text-muted font-sm">Kosongkan jika pasien membayar mandiri (Umum).</small>
+                    <div class="form-group">
+                        <label for="insurance_number" class="form-label">Nomor Jaminan / Polis</label>
+                        <input type="text" id="insurance_number" name="insurance_number" class="form-control"
+                               placeholder="Nomor BPJS / polis asuransi"
+                               value="<?= e(old('insurance_number')) ?>">
                     </div>
-
-                </div><!-- end grid -->
-            </div><!-- end card-body -->
-        </div><!-- end card -->
-
-
-        <!-- ============================================================ -->
-        <!-- SECTION 5: Kontak Darurat                                     -->
-        <!-- ============================================================ -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header" style="background-color: #c92a2a; color: #fff; padding: 14px 20px; border-radius: 4px 4px 0 0;">
-                <h2 class="font-md font-bold mb-0" style="margin: 0;">🚨 Kontak Darurat</h2>
+                </div>
             </div>
-            <div class="card-body p-4">
+        </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
-
-                    <!-- Nama Kontak Darurat -->
-                    <div class="form-group">
-                        <label for="emergency_contact_name" class="font-md font-bold mb-1 d-block">Nama Kontak Darurat</label>
-                        <input type="text" id="emergency_contact_name" name="emergency_contact_name"
-                               value="<?= e(old('emergency_contact_name')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Nama lengkap kontak darurat"
-                               style="width: 100%;">
-                    </div>
-
-                    <!-- Hubungan dengan Pasien -->
-                    <div class="form-group">
-                        <label for="emergency_contact_relation" class="font-md font-bold mb-1 d-block">Hubungan dengan Pasien</label>
-                        <input type="text" id="emergency_contact_relation" name="emergency_contact_relation"
-                               value="<?= e(old('emergency_contact_relation')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Contoh: Suami, Istri, Ayah, Ibu, Anak"
-                               style="width: 100%;">
-                    </div>
-
-                    <!-- Nomor HP Kontak Darurat -->
-                    <div class="form-group">
-                        <label for="emergency_contact_phone" class="font-md font-bold mb-1 d-block">Nomor HP Kontak Darurat</label>
-                        <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone"
-                               value="<?= e(old('emergency_contact_phone')) ?>"
-                               class="form-control form-control-accessible"
-                               placeholder="Contoh: 08198765432"
-                               style="width: 100%;">
-                    </div>
-
-                </div><!-- end grid -->
-            </div><!-- end card-body -->
-        </div><!-- end card -->
-
-
-        <!-- ============================================================ -->
-        <!-- Action Buttons                                                -->
-        <!-- ============================================================ -->
+        <!-- ===================== -->
+        <!-- SECTION: Kontak Darurat -->
+        <!-- ===================== -->
         <div class="card shadow-sm mb-4">
-            <div class="card-body p-4" style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
-                <a href="<?= url('patient') ?>"
-                   class="btn btn-light btn-accessible-lg"
-                   style="text-decoration: none; padding: 12px 28px; border: 1px solid #ccc; font-weight: bold; display: inline-flex; align-items: center; gap: 8px;">
-                    ✖ Batal
+            <div class="card-header" style="background: #f8f9fa; padding: 16px 20px; border-bottom: 2px solid #dee2e6;">
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">🚨 Kontak Darurat</h3>
+            </div>
+            <div class="card-body" style="padding: 24px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div class="form-group">
+                        <label for="emergency_contact_name" class="form-label">Nama Kontak Darurat</label>
+                        <input type="text" id="emergency_contact_name" name="emergency_contact_name" class="form-control"
+                               placeholder="Nama keluarga / wali"
+                               value="<?= e(old('emergency_contact_name')) ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="emergency_contact_relation" class="form-label">Hubungan</label>
+                        <input type="text" id="emergency_contact_relation" name="emergency_contact_relation" class="form-control"
+                               placeholder="Ibu / Ayah / Suami / Istri / dll"
+                               value="<?= e(old('emergency_contact_relation')) ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="emergency_contact_phone" class="form-label">Nomor HP Darurat</label>
+                        <input type="text" id="emergency_contact_phone" name="emergency_contact_phone" class="form-control"
+                               placeholder="08xxxxxxxxxx"
+                               value="<?= e(old('emergency_contact_phone')) ?>">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== -->
+        <!-- Tombol Aksi -->
+        <!-- ===================== -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body" style="padding: 20px; display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap;">
+                <a href="<?= url('patient') ?>" class="btn btn-secondary"
+                   style="text-decoration: none; padding: 12px 28px; font-weight: bold; font-size: 15px;">
+                    ✕ Batal
                 </a>
-                <button type="submit"
-                        class="btn btn-primary btn-accessible-lg"
-                        style="padding: 12px 32px; font-weight: bold; display: inline-flex; align-items: center; gap: 8px;">
+                <button type="submit" class="btn btn-primary"
+                        style="padding: 12px 32px; font-weight: bold; font-size: 15px;">
                     💾 Simpan Data Pasien
                 </button>
             </div>
@@ -414,31 +304,3 @@
 
     </form>
 </div>
-
-<script>
-/**
- * Tampilkan / sembunyikan field nomor jaminan berdasarkan jenis jaminan yang dipilih.
- * Jika pasien memilih 'Umum', field nomor kartu tidak perlu diisi.
- */
-function toggleInsuranceNumber(insuranceType) {
-    var wrapper = document.getElementById('insurance-number-wrapper');
-    if (!wrapper) return;
-
-    if (insuranceType === 'umum') {
-        wrapper.style.opacity = '0.5';
-        wrapper.style.pointerEvents = 'none';
-        document.getElementById('insurance_number').value = '';
-    } else {
-        wrapper.style.opacity = '1';
-        wrapper.style.pointerEvents = 'auto';
-    }
-}
-
-// Jalankan saat halaman pertama kali dimuat untuk mencocokkan kondisi awal select
-(function () {
-    var insuranceSelect = document.getElementById('insurance_type');
-    if (insuranceSelect) {
-        toggleInsuranceNumber(insuranceSelect.value);
-    }
-})();
-</script>

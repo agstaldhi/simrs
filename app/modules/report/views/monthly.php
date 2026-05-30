@@ -25,8 +25,14 @@ foreach ($monthlyStats as $stat) {
             <h1 class="page-title font-xl">Laporan Kunjungan Pasien</h1>
             <p class="page-subtitle text-muted font-md">Statistik kunjungan bulanan pasien berdasarkan klasifikasi pelayanan Rawat Jalan, Rawat Inap, dan IGD.</p>
         </div>
-        <div class="page-action">
-            <button onclick="window.print();" class="btn btn-secondary font-bold font-md">
+        <div class="page-action" style="display: flex; gap: 8px;">
+            <a href="<?= url('report/monthly?export=pdf&year=' . urlencode($year)) ?>" class="btn btn-danger font-bold font-md" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #dc3545; border: none; color: #fff; padding: 10px 15px; border-radius: 4px;">
+                <i class="fa fa-file-pdf"></i> Unduh PDF
+            </a>
+            <a href="<?= url('report/monthly?export=excel&year=' . urlencode($year)) ?>" class="btn btn-success font-bold font-md" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #28a745; border: none; color: #fff; padding: 10px 15px; border-radius: 4px;">
+                <i class="fa fa-file-excel"></i> Unduh Excel
+            </a>
+            <button onclick="window.print();" class="btn btn-secondary font-bold font-md" style="padding: 10px 15px; border-radius: 4px; border: 1px solid #ccc; background-color: #f8f9fa; color: #333; cursor: pointer;">
                 <i class="fa fa-print"></i> Cetak Laporan
             </button>
         </div>
@@ -68,6 +74,7 @@ foreach ($monthlyStats as $stat) {
     <div class="card accessible-card mt-4 mb-4">
         <div class="card-body">
             <form action="<?= url('report/monthly') ?>" method="GET" class="row align-items-end">
+                <input type="hidden" name="url" value="report/monthly">
                 <div class="col-md-8 mb-3 mb-md-0">
                     <label for="year" class="form-label font-md font-bold">Pilih Tahun Analisis</label>
                     <select id="year" name="year" class="form-control form-control-accessible">

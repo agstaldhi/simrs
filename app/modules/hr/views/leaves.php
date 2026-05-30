@@ -4,6 +4,8 @@
  */
 $pendingLeaves = $data['pendingLeaves'] ?? [];
 $historyLeaves = $data['historyLeaves'] ?? [];
+$employees = $data['employees'] ?? [];
+$action = $data['action'] ?? 'list';
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 ?>
@@ -14,6 +16,17 @@ unset($_SESSION['flash']);
             <h1 class="page-title font-xl">Persetujuan Cuti Pegawai</h1>
             <p class="page-subtitle text-muted font-md">Tinjau dan proses permohonan cuti tahunan, cuti sakit, maupun cuti melahirkan yang diajukan staf medis dan umum.</p>
         </div>
+        <div class="page-action" style="display: flex; gap: 8px;">
+            <?php if ($action === 'list'): ?>
+                <a href="<?= url('hr/leaves?action=add') ?>" class="btn btn-primary font-bold font-md">
+                    ➕ Ajukan Cuti Baru
+                </a>
+            <?php else: ?>
+                <a href="<?= url('hr/leaves') ?>" class="btn btn-outline-secondary font-bold font-md">
+                    ◀️ Kembali ke Daftar
+                </a>
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- Alert Notifications -->
@@ -22,6 +35,72 @@ unset($_SESSION['flash']);
             <strong><?= $flash['type'] === 'error' ? 'Gagal!' : 'Sukses!' ?></strong> <?= e($flash['message']) ?>
         </div>
     <?php endif; ?>
+
+    <!-- CRUD Form (Inline Page Action) -->
+    <?php if ($action === 'add'): ?>
+        <div class="card accessible-card border-primary mt-4 mb-4" style="max-width: 600px;">
+            <div class="card-header bg-primary text-white">
+                <h2 class="card-title font-lg text-white mb-0">📝 Pengajuan Cuti Pegawai Baru</h2>
+            </div>
+            <div class="card-body">
+                <form action="<?= url('hr/leaves/store') ?>" method="POST">
+                    <?= CSRF::getField() ?>
+
+                    <div class="mb-3">
+                        <label for="employee_id" class="form-label font-md font-bold">Pegawai / Staf <span class="text-danger">*</span></label>
+                        <select id="employee_id" name="employee_id" class="form-control form-control-accessible" required>
+                            <option value="">-- Pilih Pegawai --</option>
+                            <?php foreach ($employees as $emp): ?>
+                                <option value="<?= $emp['id'] ?>"><?= e($emp['full_name']) ?> (NIP: <?= e($emp['employee_number']) ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="leave_type" class="form-label font-md font-bold">Jenis Cuti <span class="text-danger">*</span></label>
+                        <select id="leave_type" name="leave_type" class="form-control form-control-accessible" required>
+                            <option value="">-- Pilih Jenis Cuti --</option>
+                            <option value="annual">Cuti Tahunan (Annual)</option>
+                            <option value="sick">Cuti Sakit (Sick)</option>
+                            <option value="maternity">Cuti Melahirkan (Maternity)</option>
+                            <option value="other">Cuti Lainnya (Other)</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_date" class="form-label font-md font-bold">Tanggal Mulai <span class="text-danger">*</span></label>
+                            <input type="date" id="start_date" name="start_date" class="form-control form-control-accessible" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end_date" class="form-label font-md font-bold">Tanggal Selesai <span class="text-danger">*</span></label>
+                            <input type="date" id="end_date" name="end_date" class="form-control form-control-accessible" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reason" class="form-label font-md font-bold">Alasan Cuti <span class="text-danger">*</span></label>
+                        <textarea id="reason" name="reason" rows="3" class="form-control form-control-accessible" placeholder="Contoh: Keperluan keluarga, pemulihan kesehatan..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label font-md font-bold">Catatan Tambahan</label>
+                        <textarea id="notes" name="notes" rows="2" class="form-control form-control-accessible" placeholder="Catatan opsional..."></textarea>
+                    </div>
+
+                    <div class="form-actions mt-4 pt-3 border-top" style="display: flex; gap: 8px;">
+                        <button type="submit" class="btn btn-primary font-bold font-md py-2 px-4">
+                            💾 Ajukan Cuti
+                        </button>
+                        <a href="<?= url('hr/leaves') ?>" class="btn btn-outline-secondary font-bold font-md py-2 px-4" style="text-decoration: none;">
+                            Batal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <?php endif; ?>
+
 
     <!-- Pending Leaves -->
     <div class="card accessible-card border-warning mt-4">

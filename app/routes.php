@@ -41,6 +41,15 @@ $router->group(['middleware' => 'auth'], function($router) {
     $router->post('/patient/delete/{id}', 'Patient@delete');
     $router->get('/patient/search', 'Patient@search');
 
+    // Inpatient (Rawat Inap) Routes
+    $router->get('/inpatient', 'Inpatient@index');
+    $router->get('/inpatient/create', 'Inpatient@create');
+    $router->post('/inpatient/store', 'Inpatient@store');
+    $router->get('/inpatient/detail/{id}', 'Inpatient@detail');
+    $router->get('/inpatient/beds', 'Inpatient@beds');
+    $router->post('/inpatient/nursing-note/store', 'Inpatient@storeNursingNote');
+    $router->post('/inpatient/discharge/{id}', 'Inpatient@discharge');
+
     // Master Data Routes
     $router->get('/master/hospital', 'Master@hospital');
     $router->post('/master/hospital/update', 'Master@updateHospital');
@@ -64,14 +73,18 @@ $router->group(['middleware' => 'auth'], function($router) {
     $router->post('/appointment/update-status/{id}', 'Appointment@updateStatus');
     $router->get('/queue', 'Appointment@queue');
     $router->post('/queue/call/{id}', 'Appointment@callQueue');
+    $router->get('/queue/display', 'Appointment@display');
+    $router->get('/queue/active-calls', 'Appointment@activeCalls');
     $router->get('/schedule', 'Appointment@schedule');
     $router->post('/schedule/store', 'Appointment@storeSchedule');
 
     // Medical Records Routes
     $router->get('/medical-record', 'MedicalRecord@index');
+    $router->get('/medical-record/icd10-autocomplete', 'MedicalRecord@icd10Autocomplete');
     $router->get('/medical-record/detail/{id}', 'MedicalRecord@detail');
     $router->get('/medical-record/create', 'MedicalRecord@create');
     $router->post('/medical-record/store', 'MedicalRecord@store');
+    $router->post('/medical-record/verify/{id}', 'MedicalRecord@verify');
 
     // Laboratory Routes
     $router->get('/laboratory/orders', 'Laboratory@orders');
@@ -87,21 +100,41 @@ $router->group(['middleware' => 'auth'], function($router) {
 
     // Billing Routes
     $router->get('/billing/invoices', 'Billing@invoices');
+    $router->get('/billing/invoices/pdf/{id}', 'Billing@invoicePdf');
     $router->get('/billing/payments', 'Billing@payments');
+    $router->get('/billing/payments/receipt-pdf/{id}', 'Billing@receiptPdf');
     $router->post('/billing/payments/store', 'Billing@storePayment');
     $router->get('/billing/outstanding', 'Billing@outstanding');
 
     // Inventory Routes
     $router->get('/inventory/items', 'Inventory@items');
+    $router->post('/inventory/items/store', 'Inventory@storeItem');
+    $router->post('/inventory/items/update/{id}', 'Inventory@updateItem');
+    $router->post('/inventory/items/delete/{id}', 'Inventory@deleteItem');
     $router->get('/inventory/purchase-orders', 'Inventory@purchaseOrders');
+    $router->post('/inventory/purchase-orders/store', 'Inventory@storePurchaseOrder');
+    $router->post('/inventory/purchase-orders/delete/{id}', 'Inventory@deletePurchaseOrder');
     $router->get('/inventory/suppliers', 'Inventory@suppliers');
+    $router->post('/inventory/suppliers', 'Inventory@suppliers');
+    $router->post('/inventory/suppliers/store', 'Inventory@storeSupplier');
+    $router->post('/inventory/suppliers/update/{id}', 'Inventory@updateSupplier');
+    $router->post('/inventory/suppliers/delete/{id}', 'Inventory@deleteSupplier');
     $router->get('/inventory/stock-opname', 'Inventory@stockOpname');
+    $router->post('/inventory/stock-opname/store', 'Inventory@storeStockOpname');
 
     // HR Routes
     $router->get('/hr/employees', 'Hr@employees');
+    $router->post('/hr/employees/store', 'Hr@storeEmployee');
+    $router->post('/hr/employees/update/{id}', 'Hr@updateEmployee');
+    $router->post('/hr/employees/delete/{id}', 'Hr@deleteEmployee');
     $router->get('/hr/attendance', 'Hr@attendance');
+    $router->post('/hr/attendance', 'Hr@attendance');
     $router->get('/hr/shifts', 'Hr@shifts');
+    $router->post('/hr/shifts/store', 'Hr@storeShift');
+    $router->post('/hr/shifts/delete/{id}', 'Hr@deleteShift');
     $router->get('/hr/leaves', 'Hr@leaves');
+    $router->post('/hr/leaves', 'Hr@leaves');
+    $router->post('/hr/leaves/store', 'Hr@storeLeave');
 
     // Report Routes
     $router->get('/report/daily', 'Report@daily');
@@ -114,8 +147,14 @@ $router->group(['middleware' => 'auth'], function($router) {
     $router->post('/settings/general/update', 'Settings@updateGeneral');
     $router->get('/settings/users', 'Settings@users');
     $router->post('/settings/users/store', 'Settings@storeUser');
+    $router->post('/settings/users/update/{id}', 'Settings@updateUser');
+    $router->post('/settings/users/toggle-active/{id}', 'Settings@toggleActive');
+    $router->post('/settings/users/delete/{id}', 'Settings@deleteUser');
     $router->get('/settings/roles', 'Settings@roles');
+    $router->post('/settings/roles/toggle-permission', 'Settings@togglePermission');
     $router->get('/settings/backup', 'Settings@backup');
     $router->post('/settings/backup/run', 'Settings@runBackup');
+    $router->get('/settings/backup/verify-download', 'Settings@verifyBackupDownload');
+    $router->post('/settings/backup/download', 'Settings@downloadBackup');
     $router->get('/settings/audit', 'Settings@audit');
 });

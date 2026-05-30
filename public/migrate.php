@@ -8,6 +8,17 @@
 define('ROOT_PATH', dirname(__DIR__));
 define('APP_PATH', ROOT_PATH . '/app');
 
+// Load Composer Autoloader
+if (file_exists(ROOT_PATH . '/vendor/autoload.php')) {
+    require_once ROOT_PATH . '/vendor/autoload.php';
+}
+
+// Load Environment Variables (.env)
+if (class_exists('Dotenv\Dotenv') && file_exists(ROOT_PATH . '/.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(ROOT_PATH);
+    $dotenv->safeLoad();
+}
+
 // Determine if running under CLI
 $isCli = (php_sapi_name() === 'cli');
 

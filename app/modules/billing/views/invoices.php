@@ -113,9 +113,14 @@ $filters = $data['filters'] ?? [];
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-center">
-                                        <a href="<?= url('billing/payments?invoice_id=' . $inv['id']) ?>" class="btn btn-primary btn-sm font-bold">
-                                            <i class="fa fa-cash-register"></i> Bayar / Detail
-                                        </a>
+                                        <div class="d-flex justify-content-center" style="gap: 5px;">
+                                            <a href="<?= url('billing/payments?invoice_id=' . $inv['id']) ?>" class="btn btn-primary btn-sm font-bold" title="Detail & Pembayaran">
+                                                <i class="fa fa-cash-register"></i> Detail
+                                            </a>
+                                            <a href="<?= url('billing/invoices/pdf/' . $inv['id']) ?>" class="btn btn-outline-primary btn-sm font-bold" target="_blank" title="Cetak PDF Invoice">
+                                                <i class="fa fa-file-pdf"></i> PDF
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

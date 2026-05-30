@@ -1,60 +1,69 @@
 # SIMRS - Sistem Informasi Manajemen Rumah Sakit
 
-Aplikasi web full-stack untuk manajemen rumah sakit yang dibangun dengan PHP Native, PDO, dan arsitektur modular.
+Aplikasi web full-stack untuk manajemen rumah sakit yang dibangun dengan PHP Native, PDO, dan arsitektur MVC modular — tanpa framework eksternal. Dilengkapi integrasi BPJS Kesehatan V-Claim, Kemenkes SatuSehat FHIR R4, enkripsi data pasien sesuai UU PDP, dan cetak invoice/kuitansi PDF.
 
 ## 📋 Fitur Utama
 
 ### ✅ Autentikasi & Otorisasi
 
-- Multi-role: Admin, Dokter, Perawat, Resepsionis, Lab, Apoteker, Kasir, HR, Pasien
-- Role-Based Access Control (RBAC)
-- Session management dengan timeout
-- Rate limiting untuk login
-- Audit log aktivitas user
+- Multi-role: Admin, Dokter, Perawat, Resepsionis, Lab, Apoteker, Kasir, HR
+- Role-Based Access Control (RBAC) dengan permission matrix yang bisa diedit dari UI
+- Session management dengan timeout otomatis
+- Rate limiting login berbasis database (bukan session) — max 5 percobaan, lockout 15 menit
+- Rate limiting request per IP (max 100 req/60 detik)
+- Audit log seluruh aktivitas pengguna (CRUD, login, backup, perubahan permission)
 
 ### 👥 Manajemen Pasien
 
-- Pendaftaran pasien baru
+- Pendaftaran pasien dengan nomor rekam medis auto-generate (thread-safe, sequence table)
 - Pencarian pasien (NIK, NoRM, nama, telepon)
-- Rekam medis elektronik (EMR)
-- Riwayat kunjungan
-- Data alergi pasien
-- Upload file lampiran
+- Rekam medis elektronik (EMR) format SOAP dengan verifikasi/kunci dokter (Permenkes 24/2022)
+- ICD-10 autocomplete (14.000+ kode) di form diagnosa
+- Riwayat kunjungan, data alergi, tanda vital
+- NIK dan nomor BPJS dienkripsi AES-256-CBC di database (UU PDP No. 27/2022)
+
+### 🏥 Rawat Inap
+
+- Admisi pasien ke ruangan dengan bed locking (mencegah double-booking concurrent)
+- Bed management dengan BOR (Bed Occupancy Rate) real-time
+- Nursing notes SOAPIE per shift perawat
+- Discharge pasien dengan kalkulasi lama rawat (Length of Stay)
+- Status ruangan: Rawat Inap, ICU, IGD
 
 ### 📅 Appointment & Antrian
 
 - Jadwal dokter per poli
-- Booking online/manual
-- Sistem antrian real-time
-- Notifikasi (opsional)
+- Booking kunjungan manual/resepsionis
+- Sistem antrian real-time dengan display layar (AJAX polling, auto-refresh)
+- Panggil nomor antrian dari UI petugas
 
 ### 🔬 Laboratorium
 
-- Order pemeriksaan lab
-- Input hasil lab
-- Template hasil pemeriksaan
-- Export report PDF
+- Order pemeriksaan lab dari dokter
+- Input hasil lab oleh petugas dengan template
+- Hasil diverifikasi otomatis menambah item ke invoice billing
 
 ### 💊 Farmasi
 
-- Manajemen resep
-- Stok obat
-- Purchase order
+- Manajemen resep dokter
+- Dispensasi obat oleh apoteker dengan pengurangan stok transaksional
+- Stok obat dan notifikasi stok minimum
 - Stock opname
 
 ### 💰 Billing & Pembayaran
 
-- Generate invoice otomatis
-- Multiple payment methods
-- Tracking tunggakan
-- Laporan keuangan
+- Generate invoice otomatis dari kunjungan (konsultasi, lab, obat, tindakan)
+- Multiple payment methods (tunai, transfer, kartu, BPJS)
+- Tracking piutang & tunggakan pasien
+- Cetak invoice A4 PDF (mPDF)
+- Cetak kuitansi kasir thermal 80mm PDF (mPDF)
 
 ### 📦 Inventory & Pembelian
 
 - Manajemen barang & supplier
 - Purchase order
-- Penerimaan barang
-- Stock movement tracking
+- Penerimaan barang & stock movement tracking
+- Stock opname
 
 ### 👔 HR & Kepegawaian
 
@@ -65,54 +74,69 @@ Aplikasi web full-stack untuk manajemen rumah sakit yang dibangun dengan PHP Nat
 
 ### 📊 Dashboard & Reporting
 
-- Dashboard role-specific
-- Laporan harian/bulanan
-- Export CSV/PDF
-- Statistik real-time
+- Dashboard role-specific dengan statistik real-time (Chart.js)
+- Laporan harian, bulanan, keuangan, custom
+- Export PDF (mPDF) dan Excel (PhpSpreadsheet)
 
 ## 🛠️ Teknologi
 
 - **Backend**: PHP 8.0+ (Native, tanpa framework)
-- **Database**: MySQL 5.7+ / MariaDB 10.3+ / PostgreSQL 12+
-- **Architecture**: MVC Modular
-- **Security**: PDO Prepared Statements, CSRF Protection, XSS Prevention
-- **Frontend**: HTML5, CSS3 (Responsive), Vanilla JavaScript
-- **Design**: Mobile-first responsive design dengan hamburger menu
+- **Database**: MySQL 5.7+ / MariaDB 10.3+
+- **Architecture**: MVC Modular (custom framework)
+- **Security**: PDO Prepared Statements, CSRF, XSS Prevention, AES-256-CBC Encryption
+- **PDF**: mPDF ^8.3
+- **Spreadsheet**: PhpSpreadsheet ^5.7
+- **Environment**: vlucas/phpdotenv ^5.6
+- **Testing**: PHPUnit ^11.5
+- **Frontend**: HTML5, CSS3 (Mobile-first), Vanilla JavaScript ES6+
+- **Integrasi**: BPJS V-Claim API, Kemenkes SatuSehat FHIR R4
 
 ## 📦 Struktur Proyek
 
 ```
 simrs/
 ├── app/
-│   ├── core/              # Core classes (Database, Router, Auth, etc.)
+│   ├── core/              # Core classes (Database, Router, Auth, Crypt, BpjsService, SatuSehatService, dll)
 │   ├── middleware/        # Middleware (Auth, Role, RateLimit)
 │   ├── modules/           # Feature modules
 │   │   ├── auth/
 │   │   ├── dashboard/
 │   │   ├── patient/
-│   │   └── ...
+│   │   ├── inpatient/     # Rawat inap, bed management, nursing notes
+│   │   ├── appointment/
+│   │   ├── medical_record/
+│   │   ├── laboratory/
+│   │   ├── pharmacy/
+│   │   ├── billing/
+│   │   ├── inventory/
+│   │   ├── hr/
+│   │   ├── report/
+│   │   ├── master/
+│   │   └── settings/
 │   ├── templates/         # Layout templates
 │   └── helpers/           # Helper functions
-├── config/                # Configuration files
-├── public/                # Public assets & entry point
+├── config/                # Configuration files (app, db, bpjs, satusehat)
+├── databases/             # SQL schema + seed data awal (11 file)
+├── migrations/            # Migrasi skema tambahan (urut)
+├── public/                # Web root — hanya folder ini yang diekspos
 │   ├── index.php
 │   ├── .htaccess
 │   └── assets/
-├── storage/               # Logs, backups, cache
-├── migrations/            # Database migrations
-├── scripts/               # Utility scripts
-├── tests/                 # Unit & integration tests
-└── docs/                  # Documentation
+├── scripts/               # CLI scripts (backup, import ICD-10, migrate)
+├── storage/               # Logs, backups (tidak di-commit ke git)
+├── tests/                 # Unit & integration tests (PHPUnit)
+└── docs/                  # Dokumentasi teknis
+    └── technical_architecture.md
 ```
 
 ## 🚀 Instalasi
 
 ### Persyaratan Sistem
 
-- PHP >= 8.0
-- MySQL >= 5.7 / MariaDB >= 10.3 / PostgreSQL >= 12
-- Apache 2.4+ / Nginx 1.18+
-- Ekstensi PHP: PDO, pdo_mysql, mbstring, openssl, gd, fileinfo
+- PHP >= 8.0 dengan ekstensi: PDO, pdo_mysql, mbstring, openssl, gd, fileinfo, curl, zip
+- MySQL >= 5.7 / MariaDB >= 10.3
+- Apache 2.4+ (mod_rewrite) / Nginx 1.18+
+- Composer >= 2.0
 
 ### Langkah Instalasi
 
@@ -124,118 +148,117 @@ git clone https://github.com/agstaldhi/simrs.git
 cd simrs
 ```
 
-#### 2. Setup Database
+#### 2. Install Dependensi
 
 ```bash
-# Login ke MySQL
-mysql -u root -p
+composer install
+```
 
+#### 3. Setup Environment
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Sesuaikan minimal variabel berikut:
+
+```env
+APP_ENV=development
+APP_URL=http://localhost/simrs/public
+DB_DSN="mysql:host=localhost;dbname=simrs;charset=utf8mb4"
+DB_USER=root
+DB_PASS=
+DB_ENCRYPTION_KEY=isi_string_acak_minimal_32_karakter
+DB_BACKUP_KEY=isi_string_acak_lain_minimal_32_karakter
+```
+
+> **⚠️ PENTING:** `DB_ENCRYPTION_KEY` wajib diset. Kunci ini digunakan untuk mengenkripsi NIK dan nomor BPJS pasien. Jika hilang, data sensitif tidak bisa dibaca.
+
+#### 4. Setup Database
+
+```bash
 # Buat database
-CREATE DATABASE simrs CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'simrs_user'@'localhost' IDENTIFIED BY 'password_kuat_123';
-GRANT ALL PRIVILEGES ON simrs.* TO 'simrs_user'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
+mysql -u root -p -e "CREATE DATABASE simrs CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-# Import schema
-mysql -u simrs_user -p simrs < migrations/01_drop_tables.sql
-mysql -u simrs_user -p simrs < migrations/02_authentication_authorization.sql
-mysql -u simrs_user -p simrs < migrations/03_master_data.sql
-mysql -u simrs_user -p simrs < migrations/04_patient_management.sql
-mysql -u simrs_user -p simrs < migrations/05_scheduling_appointments.sql
-mysql -u simrs_user -p simrs < migrations/06_laboratory.sql
-mysql -u simrs_user -p simrs < migrations/07_pharmacy.sql
-mysql -u simrs_user -p simrs < migrations/08_billing_payment.sql
-mysql -u simrs_user -p simrs < migrations/09_inventory_purchasing.sql
-mysql -u simrs_user -p simrs < migrations/10_hr_kepegawaian.sql
-mysql -u simrs_user -p simrs < migrations/11_audit_logs.sql
+# Import skema + seed data
+for f in databases/*.sql; do mysql -u root -p simrs < "$f"; done
+
+# Jalankan migrasi tambahan
+for f in migrations/*.sql; do mysql -u root -p simrs < "$f"; done
+
+# (Opsional) Import ICD-10 — 14.000+ kode diagnosa
+php scripts/import_icd10.php
 ```
 
-#### 3. Konfigurasi
+#### 5. Set Permission
 
 ```bash
-# Edit konfigurasi database
-nano config/db.php
-# Sesuaikan: dsn, user, pass
-
-# Edit konfigurasi aplikasi
-nano config/app.php
-# Sesuaikan: app_url, timezone, dll
-```
-
-#### 4. Set Permission
-
-```bash
+mkdir -p storage/logs storage/backups
 chmod -R 755 public/
-chmod -R 777 storage/
-chmod -R 777 public/uploads/
+chmod -R 777 storage/ public/uploads/
 sudo chown -R www-data:www-data /var/www/simrs
 ```
 
-#### 5. Setup Backup Otomatis
+#### 6. Setup Backup Otomatis
 
 ```bash
-# Make script executable
 chmod +x scripts/cron-backup.sh
-
-# Add to crontab
 crontab -e
-
-# Add line (backup setiap hari jam 2 pagi):
-0 2 * * * /var/www/simrs/scripts/cron-backup.sh
+# Tambahkan baris berikut (backup setiap hari jam 02:00):
+0 2 * * * /var/www/simrs/scripts/cron-backup.sh >> /var/www/simrs/storage/logs/cron.log 2>&1
 ```
+
+> Untuk panduan deploy production lengkap (Nginx, Apache VirtualHost, SSL Let's Encrypt, konfigurasi PHP-FPM), lihat [`docs/technical_architecture.md`](docs/technical_architecture.md).
 
 ## 🔐 Default Login
 
-### Admin
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@simrs.local | Admin123! |
+| Dokter | dokter@simrs.local | Dokter123! |
 
-- **Email**: admin@simrs.local
-- **Password**: Admin123!
-
-### Dokter
-
-- **Email**: dokter@simrs.local
-- **Password**: Dokter123!
-
-**⚠️ PENTING**: Ubah password default setelah login pertama!
+**⚠️ PENTING**: Ubah semua password default segera setelah login pertama melalui Pengaturan → Manajemen User.
 
 ## 🔒 Keamanan
 
 ### Fitur Keamanan Terimplementasi
 
 - ✅ PDO Prepared Statements (SQL Injection Prevention)
-- ✅ Password Hashing dengan bcrypt
-- ✅ CSRF Token Protection
-- ✅ XSS Prevention (Output Escaping)
-- ✅ Session Security (Regeneration, Timeout, HttpOnly)
-- ✅ Rate Limiting (Login & API)
-- ✅ File Upload Validation
-- ✅ HTTP Security Headers (CSP, HSTS, X-Frame-Options)
-- ✅ Input Validation & Sanitization
-- ✅ Audit Logging
-- ✅ Role-Based Access Control (RBAC)
+- ✅ Password hashing bcrypt
+- ✅ CSRF Token Protection (`hash_equals` validation)
+- ✅ XSS Prevention (output escaping via `e()`)
+- ✅ Session Security (regeneration saat login, HttpOnly, timeout)
+- ✅ Rate Limiting login dan request per IP (berbasis database)
+- ✅ Enkripsi AES-256-CBC untuk NIK & nomor BPJS pasien (UU PDP)
+- ✅ Search hash HMAC-SHA256 untuk pencarian data terenkripsi
+- ✅ HTTP Security Headers (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)
+- ✅ Backup database dienkripsi AES-256, download wajib verifikasi password
+- ✅ Role-Based Access Control (RBAC) di setiap method controller
+- ✅ Audit Logging seluruh operasi sensitif
+- ✅ Directory traversal prevention pada download backup
 
 ### Checklist Keamanan Production
 
-- [ ] Force HTTPS
-- [ ] Configure Firewall
-- [ ] Disable directory listing
-- [ ] Hide PHP version
-- [ ] Set proper file permissions
-- [ ] Enable PHP opcache
-- [ ] Configure rate limiting
-- [ ] Set up SSL/TLS certificates
-- [ ] Regular security updates
-- [ ] Database backup schedule
+- [ ] Set `APP_ENV=production` dan `APP_DEBUG=false` di `.env`
+- [ ] Set `DB_ENCRYPTION_KEY` dan `DB_BACKUP_KEY` dengan string acak unik
+- [ ] Force HTTPS (sudah otomatis jika `APP_ENV=production`)
+- [ ] Konfigurasi firewall (izinkan hanya port 80, 443, 22)
+- [ ] Disable directory listing di web server
+- [ ] Sembunyikan versi PHP (`expose_php = Off`)
+- [ ] Set permission file yang benar (lihat langkah instalasi)
+- [ ] Enable PHP OPcache
+- [ ] Setup SSL/TLS (Let's Encrypt)
+- [ ] Jadwalkan backup otomatis (cron)
+- [ ] Pastikan folder `storage/` tidak bisa diakses via browser
 
 ## 📱 Responsive Design
 
 - ✅ Mobile-first approach
 - ✅ Hamburger menu untuk mobile/tablet
 - ✅ Touch-friendly interface
-- ✅ Readable fonts (untuk usia lanjut)
-- ✅ High contrast colors
-- ✅ Large buttons & inputs
+- ✅ Font besar dan kontras tinggi (dirancang untuk staf medis segala usia)
+- ✅ Input minimal 48px tinggi untuk kemudahan pengisian di tablet
 - ✅ Breakpoints: 768px (tablet), 1024px (desktop)
 
 ## 🧪 Testing
@@ -243,66 +266,84 @@ crontab -e
 ### Unit Tests
 
 ```bash
-php tests/run_unit_tests.php
+# Jalankan semua unit test
+./vendor/bin/phpunit
+
+# Satu file test
+./vendor/bin/phpunit tests/unit/AuthTest.php
+
+# Output detail
+./vendor/bin/phpunit --verbose
 ```
+
+Test tersedia: `AuthTest`, `ValidatorTest`, `DatabaseTest`, `SIMRSEnhancementsTest`. Semua test menggunakan database transaction yang di-rollback setelah setiap test — tidak meninggalkan data di database.
 
 ### Integration Tests
 
-```bash
-php tests/run_integration_tests.php
-```
+Folder `tests/integration/` tersedia untuk pengembangan test integrasi end-to-end.
 
 ### Manual Testing Checklist
 
 - [ ] Login dengan berbagai role
-- [ ] CRUD Pasien
-- [ ] Buat appointment
-- [ ] Input rekam medis
-- [ ] Generate invoice
-- [ ] Export laporan
-- [ ] File upload
-- [ ] Mobile responsive
-- [ ] CSRF protection
+- [ ] CRUD Pasien (termasuk cek enkripsi NIK di database)
+- [ ] Pendaftaran rawat inap + discharge
+- [ ] Input rekam medis + verifikasi dokter
+- [ ] Dispensasi obat di farmasi
+- [ ] Generate invoice + cetak PDF
+- [ ] Proses pembayaran kasir + cetak kuitansi
+- [ ] Panggil antrian + display layar
+- [ ] Export laporan PDF/Excel
+- [ ] Backup database + download + restore
+- [ ] Toggle permission role dari UI
+- [ ] CSRF protection (coba kirim form tanpa token)
 - [ ] Session timeout
+- [ ] Mobile responsive
 
 ## 🔧 Maintenance
 
 ### Backup Manual
 
 ```bash
+# Via CLI
 php scripts/backup.php
+
+# Via UI: Login Admin → Pengaturan → Backup & Restore → Buat Backup Sekarang
 ```
 
 ### Restore Database
 
 ```bash
-mysql -u simrs_user -p simrs < storage/backups/backup_simrs_2024-01-01_02-00-00.sql
+# File backup sudah terdekripsi otomatis saat diunduh via UI
+mysql -u simrs_user -p simrs < backup_simrs_2025-01-15_02-00-00.sql
 ```
 
 ### View Logs
 
 ```bash
-# Application logs
+# Error aplikasi
 tail -f storage/logs/app_errors.log
 
-# PHP errors
+# Error PHP
 tail -f storage/logs/php_errors.log
 
-# Backup logs
-tail -f storage/logs/backup_success.log
+# Log request BPJS (termasuk mock mode)
+tail -f storage/logs/bpjs.log
+
+# Log request SatuSehat (termasuk mock mode)
+tail -f storage/logs/satusehat.log
 ```
 
 ### Database Maintenance
 
 ```sql
--- Optimize tables
-OPTIMIZE TABLE patients, medical_records, appointments;
+-- Optimasi tabel yang sering diakses
+OPTIMIZE TABLE patients, medical_records, patient_visits, audit_logs;
 
--- Analyze tables
-ANALYZE TABLE patients, medical_records;
-
--- Check tables
-CHECK TABLE patients, medical_records;
+-- Cek ukuran database
+SELECT table_name, ROUND((data_length + index_length) / 1024 / 1024, 2) AS size_mb
+FROM information_schema.TABLES
+WHERE table_schema = 'simrs'
+ORDER BY size_mb DESC;
 ```
 
 ## 📈 Performance Optimization
@@ -317,7 +358,7 @@ opcache.interned_strings_buffer=16
 opcache.max_accelerated_files=10000
 opcache.validate_timestamps=0
 
-; Upload limits
+; Upload & execution limits
 upload_max_filesize = 10M
 post_max_size = 12M
 max_execution_time = 300
@@ -331,16 +372,22 @@ memory_limit = 256M
 innodb_buffer_pool_size = 1G
 innodb_log_file_size = 256M
 max_connections = 200
-query_cache_size = 64M
+query_cache_size = 0      ; Nonaktifkan query cache di MySQL 8+
 ```
 
 ## 🗺️ Roadmap
 
-- [ ] Email notifications
-- [ ] SMS gateway integration
+- [x] Integrasi BPJS V-Claim (kepesertaan, rujukan, SEP)
+- [x] Integrasi SatuSehat FHIR R4 (Encounter, Observation, Condition)
+- [x] Modul rawat inap (bed management, nursing notes)
+- [x] Enkripsi data sensitif pasien (UU PDP)
+- [x] ICD-10 database lengkap + autocomplete
+- [x] Cetak invoice & kuitansi PDF
+- [x] Unit test (PHPUnit)
+- [ ] Export laporan ke Excel (PhpSpreadsheet) — dalam pengembangan
+- [ ] Notifikasi email (appointment reminder, stok minimum)
+- [ ] Modul radiologi (RIS)
 - [ ] Mobile app (iOS/Android)
 - [ ] Telemedicine module
-- [ ] Pharmacy POS integration
-- [ ] BPJS integration
-- [ ] Lab equipment integration
-- [ ] Multi-language support
+- [ ] Integrasi perangkat lab otomatis
+- [ ] Sertifikasi BPPTIK/Kemenkes

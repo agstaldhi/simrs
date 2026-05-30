@@ -33,21 +33,40 @@ $reactionSeverities = [
     <!-- Header -->
     <div class="page-header mb-4">
         <div class="page-title-box">
-            <h1 class="page-title font-xl">Rekam Medis Elektronik (RME)</h1>
-            <p class="page-subtitle text-muted font-md">Nomor Pemeriksaan Kunjungan: <strong class="text-primary"><?= e($record['visit_number'] ?? 'UMUM') ?></strong></p>
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <h1 class="page-title font-xl" style="display: inline-block; margin-bottom: 0; vertical-align: middle;">Rekam Medis Elektronik (RME)</h1>
+                <?php if ($record['record_status'] === 'verified'): ?>
+                    <span class="badge bg-success font-bold font-sm py-2 px-3" style="border-radius: 4px; display: inline-flex; align-items: center; gap: 6px; background-color: #2b8a3e; color: #fff; vertical-align: middle; margin-left: 10px;">
+                        🔒 TERVERIFIKASI & TERKUNCI
+                    </span>
+                <?php else: ?>
+                    <span class="badge bg-warning font-bold font-sm py-2 px-3" style="border-radius: 4px; display: inline-flex; align-items: center; gap: 6px; background-color: #f0a92e; color: #fff; vertical-align: middle; margin-left: 10px;">
+                        ✍️ DRAF PEMERIKSAAN
+                    </span>
+                <?php endif; ?>
+            </div>
+            <p class="page-subtitle text-muted font-md mt-1">Nomor Pemeriksaan Kunjungan: <strong class="text-primary"><?= e($record['visit_number'] ?? 'UMUM') ?></strong></p>
         </div>
-        <div class="page-action">
-            <a href="<?= url('medical-record') ?>" class="btn btn-outline-secondary font-bold font-md">
+        <div class="page-action" style="display: flex; gap: 10px; align-items: center;">
+            <a href="<?= url('medical-record') ?>" class="btn btn-outline-secondary font-bold font-md" style="text-decoration: none; padding: 10px 20px; border: 1px solid #ccc; border-radius: 4px; color: #333; display: inline-flex; align-items: center; gap: 5px;">
                 <i class="fa fa-arrow-left"></i> Kembali
             </a>
-            <button onclick="window.print()" class="btn btn-primary font-bold font-md">
+            <?php if ($record['record_status'] !== 'verified' && in_array('medical_records.edit', $_SESSION['permissions'] ?? [])): ?>
+                <form action="<?= url('medical-record/verify/' . $record['id']) ?>" method="POST" style="display: inline;" onsubmit="return confirm('Apakah Anda yakin ingin memverifikasi dan mengunci rekam medis ini? Setelah dikunci, data klinis ini tidak dapat diubah kembali sesuai Permenkes 24/2022.');">
+                    <?= CSRF::getField() ?>
+                    <button type="submit" class="btn btn-success font-bold font-md" style="background-color: #2b8a3e; border: none; padding: 10px 20px; color: #fff; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                        🔒 Verifikasi & Kunci
+                    </button>
+                </form>
+            <?php endif; ?>
+            <button onclick="window.print()" class="btn btn-primary font-bold font-md" style="padding: 10px 20px; border-radius: 4px; border: none; background-color: #007bff; color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
                 <i class="fa fa-print"></i> Cetak Lembar RME
             </button>
         </div>
     </div>
 
     <!-- Patient Header Card -->
-    <div class="card accessible-card mb-4" style="border-left: 5px solid var(--primary-color);">
+    <div class="card accessible-card mb-4" style="border-left: 5px solid <?= $record['record_status'] === 'verified' ? '#2b8a3e' : 'var(--primary-color)' ?>;">
         <div class="card-body">
             <div class="row">
                 <div class="col-md-3 border-end">
@@ -75,6 +94,15 @@ $reactionSeverities = [
                     <strong class="font-md d-block"><?= date('d/m/Y H:i', strtotime($record['created_at'])) ?></strong>
                 </div>
             </div>
+            
+            <?php if ($record['record_status'] === 'verified'): ?>
+                <div class="border-top mt-3 pt-3 font-md" style="display: flex; align-items: center; gap: 10px; color: #2b8a3e;">
+                    <i class="fa fa-check-circle" style="font-size: 18px;"></i>
+                    <span>
+                        <strong>Rekam Medis Terverifikasi:</strong> Disahkan secara elektronik oleh <strong>Dr. <?= e($record['verifier_name'] ?? $record['doctor_name']) ?></strong> pada <?= date('d/m/Y H:i', strtotime($record['verified_at'])) ?> (Sesuai dengan Permenkes No. 24 Tahun 2022 tentang Rekam Medis).
+                    </span>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 

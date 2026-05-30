@@ -240,15 +240,17 @@ $icd10 = $data['icd10'] ?? [];
 
                             <!-- Diagnosa ICD-10 Section -->
                             <h4 class="font-lg font-bold text-primary mb-3"><i class="fa fa-notes-medical"></i> 4. Klasifikasi Diagnosa Primer (ICD-10)</h4>
-                            <div class="row">
+                            <div class="row position-relative">
                                 <div class="col-md-4 mb-3">
                                     <label for="icd10_code" class="form-label font-bold">Kode ICD-10</label>
-                                    <input type="text" id="icd10_code" name="icd10_code" class="form-control" placeholder="Contoh: A90 / K29.7">
+                                    <input type="text" id="icd10_code" name="icd10_code" class="form-control" placeholder="Contoh: A90 / K29.7" autocomplete="off">
                                 </div>
                                 <div class="col-md-8 mb-3">
                                     <label for="diagnosis_name" class="form-label font-bold">Nama Diagnosa Resmi</label>
-                                    <input type="text" id="diagnosis_name" name="diagnosis_name" class="form-control" required placeholder="Contoh: Dengue Hemorrhagic Fever / Gastritis">
+                                    <input type="text" id="diagnosis_name" name="diagnosis_name" class="form-control" required placeholder="Contoh: Dengue Hemorrhagic Fever / Gastritis" autocomplete="off">
                                 </div>
+                                <!-- Autocomplete results dropdown -->
+                                <div id="icd10-results" style="display: none; position: absolute; z-index: 1050; max-height: 250px; overflow-y: auto; background: white; border: 1px solid #dee2e6; width: calc(100% - 24px); left: 12px; top: 75px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></div>
                             </div>
 
                             <hr class="my-4">
@@ -281,5 +283,84 @@ $icd10 = $data['icd10'] ?? [];
                 </div>
             </div>
         </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const icd10CodeInput = document.getElementById('icd10_code');
+            const diagnosisNameInput = document.getElementById('diagnosis_name');
+            const resultsContainer = document.getElementById('icd10-results');
+            
+            let debounceTimer;
+            
+            function searchICD10(query) {
+                if (query.length < 2) {
+                    resultsContainer.style.display = 'none';
+                    return;
+                }
+                
+                fetch('<?= url("medical-record/icd10-autocomplete") ?>?q=' + encodeURIComponent(query))
+                    .then(res => res.json())
+                    .then(data => {
+                        resultsContainer.innerHTML = '';
+                        if (data.length === 0) {
+                            const noResult = document.createElement('div');
+                            noResult.className = 'p-3 text-muted';
+                            noResult.style.fontSize = '14px';
+                            noResult.textContent = 'Tidak ada kode ICD-10 yang cocok';
+                            resultsContainer.appendChild(noResult);
+                        } else {
+                            data.forEach(item => {
+                                const option = document.createElement('a');
+                                option.href = '#';
+                                option.style.display = 'block';
+                                option.style.padding = '10px 15px';
+                                option.style.textDecoration = 'none';
+                                option.style.color = '#333';
+                                option.style.fontSize = '14px';
+                                option.style.borderBottom = '1px solid #f1f3f5';
+                                option.style.transition = 'background 0.2s';
+                                option.innerHTML = `<strong>${item.code}</strong> - ${item.name_id || item.name_en}`;
+                                
+                                option.addEventListener('mouseenter', function() {
+                                    option.style.background = '#f8f9fa';
+                                });
+                                option.addEventListener('mouseleave', function() {
+                                    option.style.background = 'transparent';
+                                });
+                                option.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    icd10CodeInput.value = item.code;
+                                    diagnosisNameInput.value = item.name_id || item.name_en;
+                                    resultsContainer.style.display = 'none';
+                                });
+                                resultsContainer.appendChild(option);
+                            });
+                        }
+                        resultsContainer.style.display = 'block';
+                    })
+                    .catch(err => console.error('ICD-10 Autocomplete error:', err));
+            }
+            
+            function setupInputListener(input) {
+                input.addEventListener('input', function() {
+                    clearTimeout(debounceTimer);
+                    const query = this.value;
+                    debounceTimer = setTimeout(() => {
+                        searchICD10(query);
+                    }, 300);
+                });
+            }
+            
+            setupInputListener(icd10CodeInput);
+            setupInputListener(diagnosisNameInput);
+            
+            // Close results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target !== icd10CodeInput && e.target !== diagnosisNameInput && e.target !== resultsContainer) {
+                    resultsContainer.style.display = 'none';
+                }
+            });
+        });
+        </script>
     <?php endif; ?>
 </div>

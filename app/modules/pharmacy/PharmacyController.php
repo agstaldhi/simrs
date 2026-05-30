@@ -130,7 +130,7 @@ class PharmacyController extends Controller
                 // Calculate cost
                 $medDetails = Database::fetchOne("SELECT selling_price FROM medicines WHERE id = ?", [$item['medicine_id']]);
                 $itemPrice = $medDetails['selling_price'] ?? 0;
-                $itemSubtotal = $itemPrice * $item->quantity;
+                $itemSubtotal = $itemPrice * $item['quantity'];
                 $totalPrice += $itemSubtotal;
 
                 // Update item price

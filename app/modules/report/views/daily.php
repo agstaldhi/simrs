@@ -13,8 +13,14 @@ $filters = $data['filters'] ?? [];
             <h1 class="page-title font-xl">Laporan Pendapatan Harian</h1>
             <p class="page-subtitle text-muted font-md">Rekapitulasi total penerimaan transaksi kasir harian berdasarkan kategori pembayaran.</p>
         </div>
-        <div class="page-action">
-            <button onclick="window.print();" class="btn btn-secondary font-bold font-md">
+        <div class="page-action" style="display: flex; gap: 8px;">
+            <a href="<?= url('report/daily?export=pdf&start_date=' . urlencode($filters['start_date']) . '&end_date=' . urlencode($filters['end_date'])) ?>" class="btn btn-danger font-bold font-md" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #dc3545; border: none; color: #fff; padding: 10px 15px; border-radius: 4px;">
+                <i class="fa fa-file-pdf"></i> Unduh PDF
+            </a>
+            <a href="<?= url('report/daily?export=excel&start_date=' . urlencode($filters['start_date']) . '&end_date=' . urlencode($filters['end_date'])) ?>" class="btn btn-success font-bold font-md" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #28a745; border: none; color: #fff; padding: 10px 15px; border-radius: 4px;">
+                <i class="fa fa-file-excel"></i> Unduh Excel
+            </a>
+            <button onclick="window.print();" class="btn btn-secondary font-bold font-md" style="padding: 10px 15px; border-radius: 4px; border: 1px solid #ccc; background-color: #f8f9fa; color: #333; cursor: pointer;">
                 <i class="fa fa-print"></i> Cetak Laporan
             </button>
         </div>

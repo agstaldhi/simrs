@@ -131,6 +131,33 @@ class PatientController extends Controller
         try {
             $patientId = $this->patientModel->create($input);
 
+            // SatuSehat Bridging Trigger (Non-blocking: will not fail patient registration if disabled or fails)
+            if (!empty($input['nik'])) {
+                try {
+                    $satuSehat = new SatuSehatService();
+                    $satusehatId = $satuSehat->getPatientIdByNik($input['nik']);
+                    if ($satusehatId) {
+                        try {
+                            // Update patient record with SatuSehat ID (fails gracefully if DB migration is not run yet)
+                            $this->patientModel->update($patientId, ['satusehat_id' => $satusehatId]);
+                            
+                            $this->logAudit(
+                                'bridge_satusehat',
+                                'patient',
+                                'patients',
+                                $patientId,
+                                'SatuSehat ID bridged: ' . $satusehatId
+                            );
+                        } catch (Exception $dbEx) {
+                            // Column might not exist yet, log and proceed
+                            error_log("SatuSehat DB update ignored (column 'satusehat_id' may not exist yet): " . $dbEx->getMessage());
+                        }
+                    }
+                } catch (Exception $sse) {
+                    error_log("SatuSehat Bridging Exception for Patient ID " . $patientId . ": " . $sse->getMessage());
+                }
+            }
+
             // Log audit
             $this->logAudit(
                 'create',

@@ -431,4 +431,62 @@ class AppointmentController extends Controller
 
         $this->redirect('schedule');
     }
+
+    /**
+     * Waiting room queue TV display board
+     */
+    public function display()
+    {
+        $this->requirePermission('queues.view');
+        
+        // Fetch active polyclinics
+        $polyclinics = Database::fetchAll("SELECT * FROM polyclinics WHERE is_active = 1 ORDER BY name ASC");
+        
+        $data = [
+            'title' => 'Layar Antrean Utama - SIMRS',
+            'polyclinics' => $polyclinics
+        ];
+        
+        $this->view('appointment/views/display', $data, false);
+    }
+
+    /**
+     * Active called queue feed in JSON
+     */
+    public function activeCalls()
+    {
+        $this->requirePermission('queues.view');
+        $today = date('Y-m-d');
+        
+        // Query to get the latest called queue for each polyclinic today
+        $query = "SELECT q.id, q.queue_number, q.status, q.called_time, poly.id AS polyclinic_id, poly.name AS polyclinic_name, poly.code AS polyclinic_code, u.full_name AS doctor_name
+                  FROM queues q
+                  JOIN polyclinics poly ON q.polyclinic_id = poly.id
+                  LEFT JOIN doctors d ON q.doctor_id = d.id
+                  LEFT JOIN users u ON d.user_id = u.id
+                  WHERE q.queue_date = ? AND q.status = 'called'
+                  AND q.id IN (
+                      SELECT MAX(id) FROM queues WHERE queue_date = ? AND status = 'called' GROUP BY polyclinic_id
+                  )
+                  ORDER BY q.called_time DESC";
+        
+        $calls = Database::fetchAll($query, [$today, $today]);
+        
+        // Also get the single latest called queue across the entire hospital to trigger the audio announcement!
+        $latestCall = Database::fetchOne(
+            "SELECT q.id, q.queue_number, poly.name AS polyclinic_name, poly.code AS polyclinic_code, u.full_name AS doctor_name
+             FROM queues q
+             JOIN polyclinics poly ON q.polyclinic_id = poly.id
+             LEFT JOIN doctors d ON q.doctor_id = d.id
+             LEFT JOIN users u ON d.user_id = u.id
+             WHERE q.queue_date = ? AND q.status = 'called'
+             ORDER BY q.called_time DESC LIMIT 1",
+            [$today]
+        );
+        
+        $this->json([
+            'calls' => $calls,
+            'latestCall' => $latestCall
+        ]);
+    }
 }

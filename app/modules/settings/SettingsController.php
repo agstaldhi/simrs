@@ -111,11 +111,23 @@ class SettingsController extends Controller
         // Fetch active roles for registration dropdown
         $roles = Database::fetchAll("SELECT * FROM roles WHERE is_active = 1 ORDER BY display_name ASC");
 
+        $editingUser = null;
+        $action = $this->get('action', 'list');
+        if ($action === 'edit') {
+            $editId = (int)$this->get('id');
+            $editingUser = Database::fetchOne("SELECT u.*, ur.role_id FROM users u LEFT JOIN user_roles ur ON u.id = ur.user_id WHERE u.id = ?", [$editId]);
+            if (!$editingUser) {
+                $this->setFlash('error', 'User tidak ditemukan.');
+                $this->redirect('settings/users');
+            }
+        }
+
         $data = [
             'title' => 'Manajemen User - SIMRS',
             'users' => $users,
             'roles' => $roles,
-            'action' => $this->get('action', 'list') // 'list' or 'add'
+            'action' => $action,
+            'editingUser' => $editingUser
         ];
 
         $this->view('settings/views/users', $data);
@@ -205,6 +217,207 @@ class SettingsController extends Controller
     }
 
     /**
+     * Update an existing user
+     */
+    public function updateUser($id)
+    {
+        $this->requirePermission('users.edit');
+        $this->requireCsrf();
+
+        $id = (int)$id;
+        $user = Database::fetchOne("SELECT id, username FROM users WHERE id = ?", [$id]);
+        if (!$user) {
+            $this->setFlash('error', 'User tidak ditemukan.');
+            $this->redirect('settings/users');
+        }
+
+        $email = trim($this->post('email', ''));
+        $fullName = trim($this->post('full_name', ''));
+        $phone = trim($this->post('phone', ''));
+        $password = $this->post('password', '');
+        $roleId = (int)$this->post('role_id', 0);
+        $isActive = (int)$this->post('is_active', 1);
+
+        if (empty($email) || empty($fullName) || empty($roleId)) {
+            $this->setFlash('error', 'Email, Nama Lengkap, dan Peran wajib diisi.');
+            $this->redirect("settings/users?action=edit&id={$id}");
+        }
+
+        // Check if email already exists for another user
+        $emailCheck = Database::fetchOne("SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1", [$email, $id]);
+        if ($emailCheck) {
+            $this->setFlash('error', 'Email sudah terdaftar untuk user lain.');
+            $this->redirect("settings/users?action=edit&id={$id}");
+        }
+
+        Database::beginTransaction();
+        try {
+            $currentUser = $this->getCurrentUser();
+            $userId = $currentUser['id'] ?? null;
+
+            $updateData = [
+                'email' => $email,
+                'full_name' => $fullName,
+                'phone' => $phone,
+                'is_active' => $isActive
+            ];
+
+            // If password is provided, hash and update it
+            if (!empty($password)) {
+                if (strlen($password) < 8) {
+                    throw new Exception('Kata sandi minimal berukuran 8 karakter.');
+                }
+                $updateData['password'] = Auth::hashPassword($password);
+            }
+
+            Database::update('users', $updateData, ['id' => $id]);
+
+            // Update role assignment
+            // Delete existing role assignments
+            Database::delete('user_roles', ['user_id' => $id]);
+            // Insert new role assignment
+            Database::insert('user_roles', [
+                'user_id' => $id,
+                'role_id' => $roleId,
+                'assigned_by' => $userId
+            ]);
+
+            Database::commit();
+            $this->logAudit('update', 'users', 'users', $id, 'Memperbarui data user: ' . $user['username']);
+            $this->setFlash('success', 'User ' . htmlspecialchars($user['username']) . ' berhasil diperbarui.');
+            $this->redirect('settings/users');
+        } catch (Exception $e) {
+            Database::rollback();
+            $this->setFlash('error', 'Gagal memperbarui data user: ' . $e->getMessage());
+            $this->redirect("settings/users?action=edit&id={$id}");
+        }
+    }
+
+    /**
+     * Toggle user active status
+     */
+    public function toggleActive($id)
+    {
+        $this->requirePermission('users.edit');
+        $this->requireCsrf();
+
+        $id = (int)$id;
+        $currentUser = $this->getCurrentUser();
+        if ($id === (int)$currentUser['id']) {
+            $this->json(['success' => false, 'message' => 'Anda tidak bisa menonaktifkan akun Anda sendiri.'], 400);
+        }
+
+        $user = Database::fetchOne("SELECT id, username, is_active FROM users WHERE id = ?", [$id]);
+        if (!$user) {
+            $this->json(['success' => false, 'message' => 'User tidak ditemukan.'], 404);
+        }
+
+        $newStatus = $user['is_active'] == 1 ? 0 : 1;
+        try {
+            Database::update('users', ['is_active' => $newStatus], ['id' => $id]);
+            
+            $statusText = $newStatus == 1 ? 'Aktif' : 'Nonaktif';
+            $this->logAudit('update', 'users', 'users', $id, 'Mengubah status user ' . $user['username'] . ' menjadi ' . $statusText);
+            
+            $this->json([
+                'success' => true,
+                'message' => 'Status user berhasil diperbarui.',
+                'is_active' => $newStatus
+            ]);
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Gagal mengubah status: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Delete a user
+     */
+    public function deleteUser($id)
+    {
+        $this->requirePermission('users.delete');
+        $this->requireCsrf();
+
+        $id = (int)$id;
+        $currentUser = $this->getCurrentUser();
+        if ($id === (int)$currentUser['id']) {
+            $this->setFlash('error', 'Anda tidak bisa menghapus akun Anda sendiri.');
+            $this->redirect('settings/users');
+        }
+
+        $user = Database::fetchOne("SELECT id, username FROM users WHERE id = ?", [$id]);
+        if (!$user) {
+            $this->setFlash('error', 'User tidak ditemukan.');
+            $this->redirect('settings/users');
+        }
+
+        Database::beginTransaction();
+        try {
+            // Delete role mapping first
+            Database::delete('user_roles', ['user_id' => $id]);
+            // Delete user
+            Database::delete('users', ['id' => $id]);
+
+            Database::commit();
+            $this->logAudit('delete', 'users', 'users', $id, 'Menghapus user: ' . $user['username']);
+            $this->setFlash('success', 'User ' . htmlspecialchars($user['username']) . ' berhasil dihapus.');
+        } catch (Exception $e) {
+            Database::rollback();
+            $this->setFlash('error', 'Gagal menghapus user: ' . $e->getMessage());
+        }
+
+        $this->redirect('settings/users');
+    }
+
+    /**
+     * Toggle a permission for a role
+     */
+    public function togglePermission()
+    {
+        $this->requirePermission('roles.edit');
+        $this->requireCsrf();
+
+        $roleId = (int)$this->post('role_id');
+        $permissionId = (int)$this->post('permission_id');
+        $assign = (int)$this->post('assign'); // 1 to assign, 0 to revoke
+
+        if (empty($roleId) || empty($permissionId)) {
+            $this->json(['success' => false, 'message' => 'Role ID dan Permission ID wajib diisi.'], 400);
+        }
+
+        // Verify role and permission exist
+        $role = Database::fetchOne("SELECT id, name FROM roles WHERE id = ?", [$roleId]);
+        $permission = Database::fetchOne("SELECT id, name FROM permissions WHERE id = ?", [$permissionId]);
+
+        if (!$role || !$permission) {
+            $this->json(['success' => false, 'message' => 'Role atau Permission tidak valid.'], 404);
+        }
+
+        try {
+            if ($assign === 1) {
+                // Check if already mapped
+                $exists = Database::fetchOne("SELECT 1 FROM role_permissions WHERE role_id = ? AND permission_id = ?", [$roleId, $permissionId]);
+                if (!$exists) {
+                    Database::insert('role_permissions', [
+                        'role_id' => $roleId,
+                        'permission_id' => $permissionId
+                    ]);
+                    $this->logAudit('update', 'roles', 'role_permissions', null, "Memberikan izin {$permission['name']} kepada peran {$role['name']}");
+                }
+            } else {
+                Database::delete('role_permissions', [
+                    'role_id' => $roleId,
+                    'permission_id' => $permissionId
+                ]);
+                $this->logAudit('update', 'roles', 'role_permissions', null, "Mencabut izin {$permission['name']} dari peran {$role['name']}");
+            }
+
+            $this->json(['success' => true, 'message' => 'Hak akses berhasil diperbarui.']);
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Gagal memperbarui hak akses: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Role & Permission Matrix View
      */
     public function roles()
@@ -268,21 +481,10 @@ class SettingsController extends Controller
             $this->redirect('settings/backup');
         }
 
-        // Download action
+        // Download action (Force redirect to secure verify page)
         if ($action === 'download' && !empty($file)) {
             if (file_exists($filePath) && is_file($filePath)) {
-                $this->logAudit('download', 'settings', 'system_settings', null, 'Mengunduh berkas cadangan database: ' . $file);
-                
-                header('Content-Description: File Transfer');
-                header('Content-Type: application/octet-stream');
-                header('Content-Disposition: attachment; filename="' . $file . '"');
-                header('Expires: 0');
-                header('Cache-Control: must-revalidate');
-                header('Pragma: public');
-                header('Content-Length: ' . filesize($filePath));
-                
-                readfile($filePath);
-                exit;
+                $this->redirect('settings/backup/verify-download?file=' . urlencode($file));
             } else {
                 $this->setFlash('error', 'Berkas cadangan tidak ditemukan.');
                 $this->redirect('settings/backup');
@@ -311,6 +513,104 @@ class SettingsController extends Controller
         ];
 
         $this->view('settings/views/backup', $data);
+    }
+
+    /**
+     * Show verification page for downloading a database backup
+     */
+    public function verifyBackupDownload()
+    {
+        $this->requirePermission('settings.backup');
+
+        $file = $this->get('file');
+        if (empty($file)) {
+            $this->setFlash('error', 'Berkas tidak ditentukan.');
+            $this->redirect('settings/backup');
+        }
+
+        $file = basename($file);
+        $backupDir = __DIR__ . '/../../../storage/backups';
+        $filePath = $backupDir . '/' . $file;
+
+        if (!file_exists($filePath) || !is_file($filePath)) {
+            $this->setFlash('error', 'Berkas cadangan tidak ditemukan.');
+            $this->redirect('settings/backup');
+        }
+
+        $data = [
+            'title' => 'Verifikasi Unduhan Backup - SIMRS',
+            'file' => $file
+        ];
+
+        $this->view('settings/views/verify_download', $data);
+    }
+
+    /**
+     * Verify password and download decrypted backup
+     */
+    public function downloadBackup()
+    {
+        $this->requirePermission('settings.backup');
+        
+        $this->requireCsrf();
+
+        $file = $this->post('file');
+        $password = $this->post('password');
+
+        if (empty($file)) {
+            $this->setFlash('error', 'Berkas tidak ditentukan.');
+            $this->redirect('settings/backup');
+        }
+
+        $file = basename($file);
+        $backupDir = __DIR__ . '/../../../storage/backups';
+        $filePath = $backupDir . '/' . $file;
+
+        if (!file_exists($filePath) || !is_file($filePath)) {
+            $this->setFlash('error', 'Berkas cadangan tidak ditemukan.');
+            $this->redirect('settings/backup');
+        }
+
+        // Verify password
+        $user = Database::fetchOne("SELECT password FROM users WHERE id = ?", [Session::getUserId()]);
+        if (!$user || !Auth::verifyPassword($password, $user['password'])) {
+            $this->setFlash('error', 'Kata sandi salah. Verifikasi gagal.');
+            $this->redirect('settings/backup/verify-download?file=' . urlencode($file));
+        }
+
+        // Log audit
+        $this->logAudit('download', 'settings', 'system_settings', null, 'Mengunduh berkas cadangan database: ' . $file);
+
+        // Read file contents
+        $content = file_get_contents($filePath);
+        $decryptedContent = $content;
+
+        // Try decrypting if it is encrypted
+        $parts = explode('::', $content, 2);
+        if (count($parts) === 2) {
+            $iv = base64_decode($parts[0]);
+            $ciphertext = $parts[1];
+            $key = env('DB_BACKUP_KEY');
+            if (empty($key)) {
+                throw new Exception("Enkripsi gagal: DB_BACKUP_KEY belum diatur di file .env.");
+            }
+            $decrypted = openssl_decrypt($ciphertext, 'aes-256-cbc', $key, 0, $iv);
+            if ($decrypted !== false) {
+                $decryptedContent = $decrypted;
+            }
+        }
+
+        // Output download
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . $file . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . strlen($decryptedContent));
+        
+        echo $decryptedContent;
+        exit;
     }
 
     /**
@@ -386,10 +686,19 @@ class SettingsController extends Controller
                 mkdir($backupDir, 0777, true);
             }
 
+            // Encrypt database backup
+            $key = env('DB_BACKUP_KEY');
+            if (empty($key)) {
+                throw new Exception("Enkripsi gagal: DB_BACKUP_KEY belum diatur di file .env.");
+            }
+            $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
+            $encryptedSql = openssl_encrypt($sql, 'aes-256-cbc', $key, 0, $iv);
+            $fileContent = base64_encode($iv) . '::' . $encryptedSql;
+
             $fileName = 'backup_simrs_' . date('Y-m-d_H-i-s') . '.sql';
             $filePath = $backupDir . '/' . $fileName;
 
-            file_put_contents($filePath, $sql);
+            file_put_contents($filePath, $fileContent);
 
             $this->logAudit('backup', 'settings', 'system_settings', null, 'Membuat cadangan database manual: ' . $fileName);
             $this->setFlash('success', 'Berhasil mencadangkan database dengan nama berkas: ' . $fileName);
@@ -407,13 +716,73 @@ class SettingsController extends Controller
     {
         $this->requirePermission('audit.view');
 
-        // Fetch latest 500 audit logs
-        $query = "SELECT * FROM audit_logs ORDER BY id DESC LIMIT 500";
-        $auditLogs = Database::fetchAll($query);
+        $startDate = $this->get('start_date', '');
+        $endDate = $this->get('end_date', '');
+        $username = $this->get('username', '');
+        $action = $this->get('action', '');
+        $page = (int)$this->get('page', 1);
+        if ($page < 1) {
+            $page = 1;
+        }
+
+        $limit = 50;
+        $params = [];
+        $where = ["1=1"];
+
+        if (!empty($startDate)) {
+            $where[] = "DATE(created_at) >= ?";
+            $params[] = $startDate;
+        }
+        if (!empty($endDate)) {
+            $where[] = "DATE(created_at) <= ?";
+            $params[] = $endDate;
+        }
+        if (!empty($username)) {
+            $where[] = "username LIKE ?";
+            $params[] = "%$username%";
+        }
+        if (!empty($action)) {
+            $where[] = "action = ?";
+            $params[] = $action;
+        }
+
+        $whereClause = implode(" AND ", $where);
+
+        // Get total count
+        $countQuery = "SELECT COUNT(*) as total FROM audit_logs WHERE {$whereClause}";
+        $countResult = Database::fetchOne($countQuery, $params);
+        $totalRecords = (int)($countResult['total'] ?? 0);
+
+        $totalPages = ceil($totalRecords / $limit);
+        if ($totalPages < 1) {
+            $totalPages = 1;
+        }
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+
+        $offset = ($page - 1) * $limit;
+
+        // Fetch logs with limit and offset
+        $query = "SELECT * FROM audit_logs WHERE {$whereClause} ORDER BY id DESC LIMIT {$limit} OFFSET {$offset}";
+        $auditLogs = Database::fetchAll($query, $params);
+
+        // Fetch distinct actions list for drop-down filter
+        $actions = Database::fetchAll("SELECT DISTINCT action FROM audit_logs WHERE action IS NOT NULL ORDER BY action ASC");
 
         $data = [
             'title' => 'Audit Log - SIMRS',
-            'auditLogs' => $auditLogs
+            'auditLogs' => $auditLogs,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'totalRecords' => $totalRecords,
+            'actions' => array_column($actions, 'action'),
+            'filters' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'username' => $username,
+                'action' => $action
+            ]
         ];
 
         $this->view('settings/views/audit', $data);

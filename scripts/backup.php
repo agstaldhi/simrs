@@ -10,6 +10,15 @@
  * 0 2 * * * /usr/bin/php /var/www/simrs/scripts/backup.php
  */
 
+// Load autoloader and .env
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+}
+if (class_exists('Dotenv\Dotenv') && file_exists(__DIR__ . '/../.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+    $dotenv->safeLoad();
+}
+
 // Load configuration
 $config = require __DIR__ . '/../config/db.php';
 
@@ -99,8 +108,25 @@ if ($gzReturnVar === 0 && file_exists($backupFileGz)) {
     echo "Backup compressed: $backupFileGz\n";
     echo "Compressed size: $compressedSizeMB MB\n";
     echo "Compression ratio: $compressionRatio%\n";
+    $fileToEncrypt = $backupFileGz;
 } else {
     echo "Warning: Compression failed, keeping uncompressed backup\n";
+    $fileToEncrypt = $backupFile;
+}
+
+// Encrypt the backup file
+if (file_exists($fileToEncrypt)) {
+    echo "Encrypting backup...\n";
+    $rawContent = file_get_contents($fileToEncrypt);
+    $key = env('DB_BACKUP_KEY');
+    if (empty($key)) {
+        die("Error: DB_BACKUP_KEY belum diatur di file .env. Enkripsi backup dibatalkan.\n");
+    }
+    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
+    $encrypted = openssl_encrypt($rawContent, 'aes-256-cbc', $key, 0, $iv);
+    $fileContent = base64_encode($iv) . '::' . $encrypted;
+    file_put_contents($fileToEncrypt, $fileContent);
+    echo "Backup encrypted successfully.\n";
 }
 
 // Clean old backups

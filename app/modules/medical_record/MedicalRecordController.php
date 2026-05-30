@@ -69,12 +69,13 @@ class MedicalRecordController extends Controller
 
         $record = Database::fetchOne(
             "SELECT mr.*, p.medical_record_number, p.full_name AS patient_name, p.gender, p.birth_date, 
-                     p.blood_type, p.allergen, p.insurance_type, u.full_name AS doctor_name, d.specialization,
-                     pv.visit_number, pv.visit_date
+                     p.blood_type, p.insurance_type, u.full_name AS doctor_name, d.specialization,
+                     pv.visit_number, pv.visit_date, uv.full_name AS verifier_name
              FROM medical_records mr
              JOIN patients p ON mr.patient_id = p.id
              JOIN doctors d ON mr.doctor_id = d.id
              JOIN users u ON d.user_id = u.id
+             LEFT JOIN users uv ON mr.verified_by = uv.id
              LEFT JOIN patient_visits pv ON mr.visit_id = pv.id
              WHERE mr.id = ?",
             [$id]
@@ -341,5 +342,67 @@ class MedicalRecordController extends Controller
             $this->setFlash('error', 'Gagal menyimpan rekam medis. Error: ' . $e->getMessage());
             $this->redirect('medical-record/create?visit_id=' . $visitId);
         }
+    }
+
+    /**
+     * Search ICD-10 codes for autocompletion
+     */
+    public function icd10Autocomplete()
+    {
+        $this->requirePermission('medical_records.view');
+        $q = trim($this->get('q', ''));
+        
+        if (strlen($q) < 2) {
+            $this->json([]);
+        }
+        
+        $query = "SELECT code, name_en, name_id 
+                  FROM icds 
+                  WHERE code LIKE ? OR name_id LIKE ? OR name_en LIKE ? 
+                  LIMIT 15";
+        $params = ["%$q%", "%$q%", "%$q%"];
+        
+        $results = Database::fetchAll($query, $params);
+        $this->json($results);
+    }
+
+    /**
+     * Verify and lock a medical record (Permenkes 24/2022 compliance)
+     */
+    public function verify($id)
+    {
+        $this->requirePermission('medical_records.edit');
+        $this->requireCsrf();
+
+        $id = (int)$id;
+        $record = Database::fetchOne("SELECT id, record_status, patient_id FROM medical_records WHERE id = ?", [$id]);
+        if (!$record) {
+            $this->setFlash('error', 'Rekam medis tidak ditemukan.');
+            $this->redirect('medical-record');
+        }
+
+        if ($record['record_status'] === 'verified') {
+            $this->setFlash('warning', 'Rekam medis sudah terverifikasi sebelumnya.');
+            $this->redirect('medical-record/detail/' . $id);
+        }
+
+        // Get current user id
+        $user = $this->getCurrentUser();
+        $userId = $user['id'] ?? null;
+
+        try {
+            Database::update('medical_records', [
+                'record_status' => 'verified',
+                'verified_by' => $userId,
+                'verified_at' => date('Y-m-d H:i:s')
+            ], ['id' => $id]);
+
+            $this->logAudit('verify', 'medical_record', 'medical_records', $id, "Memverifikasi dan mengunci rekam medis ID: {$id}");
+            $this->setFlash('success', 'Rekam medis berhasil diverifikasi dan dikunci secara sah.');
+        } catch (Exception $e) {
+            $this->setFlash('error', 'Gagal memverifikasi rekam medis: ' . $e->getMessage());
+        }
+
+        $this->redirect('medical-record/detail/' . $id);
     }
 }

@@ -32,8 +32,14 @@ foreach ($paymentMethods as $method) {
             <h1 class="page-title font-xl">Laporan Rekapitulasi Keuangan</h1>
             <p class="page-subtitle text-muted font-md">Analisis performa finansial berdasarkan jenis layanan (Apotek, Laboratorium, Konsultasi) dan kanal pembayaran.</p>
         </div>
-        <div class="page-action">
-            <button onclick="window.print();" class="btn btn-secondary font-bold font-md">
+        <div class="page-action" style="display: flex; gap: 8px;">
+            <a href="<?= url('report/financial?export=pdf&month=' . sprintf('%02d', $month) . '&year=' . urlencode($year)) ?>" class="btn btn-danger font-bold font-md" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #dc3545; border: none; color: #fff; padding: 10px 15px; border-radius: 4px;">
+                <i class="fa fa-file-pdf"></i> Unduh PDF
+            </a>
+            <a href="<?= url('report/financial?export=excel&month=' . sprintf('%02d', $month) . '&year=' . urlencode($year)) ?>" class="btn btn-success font-bold font-md" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #28a745; border: none; color: #fff; padding: 10px 15px; border-radius: 4px;">
+                <i class="fa fa-file-excel"></i> Unduh Excel
+            </a>
+            <button onclick="window.print();" class="btn btn-secondary font-bold font-md" style="padding: 10px 15px; border-radius: 4px; border: 1px solid #ccc; background-color: #f8f9fa; color: #333; cursor: pointer;">
                 <i class="fa fa-print"></i> Cetak Laporan
             </button>
         </div>
@@ -68,6 +74,7 @@ foreach ($paymentMethods as $method) {
     <div class="card accessible-card mt-4 mb-4">
         <div class="card-body">
             <form action="<?= url('report/financial') ?>" method="GET" class="row align-items-end">
+                <input type="hidden" name="url" value="report/financial">
                 <div class="col-md-5 mb-3 mb-md-0">
                     <label for="month" class="form-label font-md font-bold">Bulan</label>
                     <select id="month" name="month" class="form-control form-control-accessible">

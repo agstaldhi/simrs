@@ -15,6 +15,17 @@ define('APP_PATH', ROOT_PATH . '/app');
 define('PUBLIC_PATH', ROOT_PATH . '/public');
 define('STORAGE_PATH', ROOT_PATH . '/storage');
 
+// Load Composer Autoloader
+if (file_exists(ROOT_PATH . '/vendor/autoload.php')) {
+    require_once ROOT_PATH . '/vendor/autoload.php';
+}
+
+// Load Environment Variables (.env)
+if (class_exists('Dotenv\Dotenv') && file_exists(ROOT_PATH . '/.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(ROOT_PATH);
+    $dotenv->safeLoad();
+}
+
 // Load configuration
 $appConfig = require ROOT_PATH . '/config/app.php';
 

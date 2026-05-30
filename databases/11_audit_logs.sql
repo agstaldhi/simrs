@@ -219,7 +219,9 @@ INSERT INTO system_settings (setting_key, setting_value, setting_type, category,
 
 -- Billing Settings
 ('tax_percentage', '11', 'number', 'billing', 'Persentase pajak (%)', 0),
-('invoice_due_days', '7', 'number', 'billing', 'Jatuh tempo invoice (hari)', 0);
+('invoice_due_days', '7', 'number', 'billing', 'Jatuh tempo invoice (hari)', 0),
+('satusehat_token', '', 'string', 'security', 'SatuSehat OAuth Access Token', 0),
+('satusehat_token_expires', '0', 'number', 'security', 'SatuSehat OAuth Access Token Expiry Timestamp', 0);
 
 -- =====================================================
 -- Seed Data: Sample Audit Logs

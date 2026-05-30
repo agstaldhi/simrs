@@ -41,9 +41,9 @@ foreach ($permissions as $perm) {
     <!-- Info Box -->
     <div class="card accessible-helper-card mb-4" style="background-color: #e7f5ff; border-left: 5px solid #228be6;">
         <div class="card-body" style="padding: 16px;">
-            <h3 class="font-md font-bold mb-1" style="color: #1c7ed6;">ℹ️ Standar Keamanan SIMRS</h3>
+            <h3 class="font-md font-bold mb-1" style="color: #1c7ed6;">ℹ️ Manajemen Hak Akses (Role-Based Access Control)</h3>
             <p class="font-sm mb-0" style="color: #495057;">
-                Matriks di bawah bersifat <strong>BACA SAJA (Read-Only)</strong> untuk menjamin konsistensi regulasi perizinan rekam medis. Perubahan pemetaan izin hanya dapat dilakukan oleh database administrator melalui konsol migrasi database utama demi alasan keamanan data medis.
+                Matriks di bawah dapat langsung diubah oleh Administrator. Perubahan hak akses akan disimpan secara real-time saat Anda mencentang atau mengosongkan kotak pilihan.
             </p>
         </div>
     </div>
@@ -58,8 +58,8 @@ foreach ($permissions as $perm) {
                             <th style="padding: 16px; text-align: left; font-weight: bold; width: 300px;" class="font-md">Modul & Hak Izin (Permissions)</th>
                             <?php foreach ($roles as $role): ?>
                                 <th style="padding: 16px; font-weight: bold; min-width: 110px;" class="font-md">
-                                    <?= e($role['display_name']) ?><br>
-                                    <small class="text-muted font-sm" style="font-weight: normal; font-size: 11px;">(<?= e($role['name']) ?>)</small>
+                                     <?= e($role['display_name']) ?><br>
+                                     <small class="text-muted font-sm" style="font-weight: normal; font-size: 11px;">(<?= e($role['name']) ?>)</small>
                                 </th>
                             <?php endforeach; ?>
                         </tr>
@@ -88,12 +88,14 @@ foreach ($permissions as $perm) {
                                             <td style="padding: 12px; text-align: center; vertical-align: middle;" class="font-md">
                                                 <?php 
                                                 $hasPerm = isset($rolePermissions[$role['id']][$perm['id']]);
-                                                if ($hasPerm): 
                                                 ?>
-                                                    <span class="text-success font-bold" style="color: #2b8a3e; font-size: 20px;" title="Diizinkan">✔</span>
-                                                <?php else: ?>
-                                                    <span class="text-muted" style="color: #adb5bd; font-size: 18px;" title="Ditolak">-</span>
-                                                <?php endif; ?>
+                                                <input type="checkbox" 
+                                                       class="permission-checkbox" 
+                                                       data-role-id="<?= (int)$role['id'] ?>" 
+                                                       data-permission-id="<?= (int)$perm['id'] ?>" 
+                                                       <?= $hasPerm ? 'checked' : '' ?>
+                                                       style="width: 18px; height: 18px; cursor: pointer; vertical-align: middle;"
+                                                       onchange="handlePermissionToggle(this)">
                                             </td>
                                         <?php endforeach; ?>
                                     </tr>
@@ -105,4 +107,46 @@ foreach ($permissions as $perm) {
             </div>
         </div>
     </div>
+</div>
+
+<script>
+function handlePermissionToggle(checkbox) {
+    const roleId = checkbox.getAttribute('data-role-id');
+    const permissionId = checkbox.getAttribute('data-permission-id');
+    const assign = checkbox.checked ? 1 : 0;
+    
+    // Disable checkbox temporarily during fetch
+    checkbox.disabled = true;
+    
+    const formData = new FormData();
+    formData.append('role_id', roleId);
+    formData.append('permission_id', permissionId);
+    formData.append('assign', assign);
+    formData.append('_token', '<?= CSRF::getToken() ?>');
+    
+    fetch('<?= url("settings/roles/toggle-permission") ?>', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        checkbox.disabled = false;
+        if (!data.success) {
+            alert(data.message || 'Gagal memperbarui hak akses.');
+            // Revert state
+            checkbox.checked = !checkbox.checked;
+        }
+    })
+    .catch(err => {
+        checkbox.disabled = false;
+        console.error(err);
+        alert('Terjadi kesalahan koneksi.');
+        // Revert state
+        checkbox.checked = !checkbox.checked;
+    });
+}
+</script>
 </div>

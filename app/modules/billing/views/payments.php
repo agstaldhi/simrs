@@ -117,12 +117,13 @@ $payments = $data['payments'] ?? [];
                                     <th scope="col" class="font-md">Metode Bayar</th>
                                     <th scope="col" class="font-md">Penerima Kasir</th>
                                     <th scope="col" class="font-md text-right">Jumlah Dibayar</th>
+                                    <th scope="col" class="font-md text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($payments)): ?>
                                     <tr>
-                                        <td colspan="4" class="text-center py-3 text-muted">Belum ada transaksi pembayaran terdaftar untuk invoice ini.</td>
+                                        <td colspan="5" class="text-center py-3 text-muted">Belum ada transaksi pembayaran terdaftar untuk invoice ini.</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($payments as $pay): ?>
@@ -135,6 +136,11 @@ $payments = $data['payments'] ?? [];
                                             </td>
                                             <td class="font-bold"><?= e($pay['cashier_name']) ?></td>
                                             <td class="text-right font-bold text-success"><?= formatRupiah($pay['amount']) ?></td>
+                                            <td class="text-center">
+                                                <a href="<?= url('billing/payments/receipt-pdf/' . $pay['id']) ?>" class="btn btn-outline-success btn-sm font-bold" target="_blank" title="Cetak Kuitansi / Struk">
+                                                    <i class="fa fa-print"></i> Struk
+                                                </a>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>

@@ -23,12 +23,12 @@ class PatientModel extends Model
     {
         $offset = ($page - 1) * $perPage;
 
-        // Search by MRN, NIK, name, or phone
+        // Search by MRN, NIK (hash lookup), name, or phone
         $sql = "SELECT * FROM {$this->table} 
                 WHERE is_active = 1 
                 AND (
                     medical_record_number LIKE ? 
-                    OR nik LIKE ?
+                    OR (nik_hash = ?)
                     OR full_name LIKE ?
                     OR phone LIKE ?
                     OR mobile LIKE ?
@@ -37,22 +37,24 @@ class PatientModel extends Model
                 LIMIT ? OFFSET ?";
 
         $searchParam = "%{$query}%";
-        $params = [$searchParam, $searchParam, $searchParam, $searchParam, $searchParam, $perPage, $offset];
+        $nikHashParam = Crypt::hash($query);
+        $params = [$searchParam, $nikHashParam, $searchParam, $searchParam, $searchParam, $perPage, $offset];
 
         $data = Database::fetchAll($sql, $params);
+        $data = array_map([$this, 'decryptPatient'], $data);
 
         // Get total count for pagination
         $countSql = "SELECT COUNT(*) as count FROM {$this->table} 
                      WHERE is_active = 1 
                      AND (
-                         medical_record_number LIKE ? 
-                         OR nik LIKE ?
-                         OR full_name LIKE ?
-                         OR phone LIKE ?
-                         OR mobile LIKE ?
-                     )";
+                          medical_record_number LIKE ? 
+                          OR (nik_hash = ?)
+                          OR full_name LIKE ?
+                          OR phone LIKE ?
+                          OR mobile LIKE ?
+                      )";
 
-        $countParams = [$searchParam, $searchParam, $searchParam, $searchParam, $searchParam];
+        $countParams = [$searchParam, $nikHashParam, $searchParam, $searchParam, $searchParam];
         $total = Database::fetchOne($countSql, $countParams)['count'];
 
         $totalPages = ceil($total / $perPage);
@@ -184,6 +186,90 @@ class PatientModel extends Model
                 AND is_active = 1
                 ORDER BY DAY(birth_date) ASC";
 
-        return Database::fetchAll($sql);
+        $data = Database::fetchAll($sql);
+        return array_map([$this, 'decryptPatient'], $data);
+    }
+
+    // ==========================================
+    // OVERRIDES & CRYPTO HELPERS FOR UU PDP
+    // ==========================================
+
+    public function find($id)
+    {
+        $patient = parent::find($id);
+        return $patient ? $this->decryptPatient($patient) : false;
+    }
+
+    public function findAll($conditions = [], $orderBy = null, $limit = null, $offset = null)
+    {
+        $patients = parent::findAll($conditions, $orderBy, $limit, $offset);
+        return array_map([$this, 'decryptPatient'], $patients);
+    }
+
+    public function findOne($conditions)
+    {
+        $conditions = $this->hashConditions($conditions);
+        $patient = parent::findOne($conditions);
+        return $patient ? $this->decryptPatient($patient) : false;
+    }
+
+    public function create($data)
+    {
+        $data = $this->encryptPatient($data);
+        return parent::create($data);
+    }
+
+    public function update($id, $data)
+    {
+        $data = $this->encryptPatient($data);
+        return parent::update($id, $data);
+    }
+
+    /**
+     * Encrypt sensitive fields and generate search hashes
+     */
+    private function encryptPatient($data)
+    {
+        if (isset($data['nik'])) {
+            $data['nik_hash'] = Crypt::hash($data['nik']);
+            $data['nik'] = Crypt::encrypt($data['nik']);
+        }
+        if (isset($data['insurance_number'])) {
+            $data['insurance_number_hash'] = Crypt::hash($data['insurance_number']);
+            $data['insurance_number'] = Crypt::encrypt($data['insurance_number']);
+        }
+        return $data;
+    }
+
+    /**
+     * Decrypt sensitive patient fields
+     */
+    public function decryptPatient($data)
+    {
+        if (empty($data)) return $data;
+        
+        if (isset($data['nik'])) {
+            $data['nik'] = Crypt::decrypt($data['nik']);
+        }
+        if (isset($data['insurance_number'])) {
+            $data['insurance_number'] = Crypt::decrypt($data['insurance_number']);
+        }
+        return $data;
+    }
+
+    /**
+     * Map search conditions (for NIK / BPJS number) to search hashes
+     */
+    private function hashConditions($conditions)
+    {
+        if (isset($conditions['nik'])) {
+            $conditions['nik_hash'] = Crypt::hash($conditions['nik']);
+            unset($conditions['nik']);
+        }
+        if (isset($conditions['insurance_number'])) {
+            $conditions['insurance_number_hash'] = Crypt::hash($conditions['insurance_number']);
+            unset($conditions['insurance_number']);
+        }
+        return $conditions;
     }
 }

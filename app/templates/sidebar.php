@@ -76,6 +76,21 @@ $user = Auth::user();
                     </li>
                 <?php endif; ?>
 
+                <!-- Inpatient (Rawat Inap) -->
+                <?php if (Auth::can('patients.view')): ?>
+                    <li class="menu-item has-submenu <?= activeClass('inpatient') ?>">
+                        <a href="<?= url('inpatient') ?>" class="menu-link">
+                            <span class="menu-icon">🏥</span>
+                            <span class="menu-text">Rawat Inap</span>
+                            <span class="menu-arrow">▼</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="<?= url('inpatient') ?>">Daftar Pasien Ranap</a></li>
+                            <li><a href="<?= url('inpatient/beds') ?>">Status Tempat Tidur</a></li>
+                        </ul>
+                    </li>
+                <?php endif; ?>
+
                 <!-- Appointment & Queue -->
                 <?php if (Auth::can('appointments.view')): ?>
                     <li class="menu-item has-submenu <?= activeClass('appointment') ?>">

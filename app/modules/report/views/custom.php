@@ -15,9 +15,15 @@ $endDate = $filters['end_date'] ?? date('Y-m-d');
             <h1 class="page-title font-xl">Pencarian & Ekspor Kustom</h1>
             <p class="page-subtitle text-muted font-md">Ekspor data transaksional rumah sakit secara terperinci berdasarkan kriteria rentang tanggal.</p>
         </div>
-        <div class="page-action">
-            <button onclick="window.print();" class="btn btn-secondary font-bold font-md">
-                <i class="fa fa-download"></i> Ekspor PDF / Cetak
+        <div class="page-action" style="display: flex; gap: 8px;">
+            <a href="<?= url('report/custom?export=pdf&report_type=' . urlencode($reportType) . '&start_date=' . urlencode($startDate) . '&end_date=' . urlencode($endDate)) ?>" class="btn btn-danger font-bold font-md" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #dc3545; border: none; color: #fff; padding: 10px 15px; border-radius: 4px;">
+                <i class="fa fa-file-pdf"></i> Unduh PDF
+            </a>
+            <a href="<?= url('report/custom?export=excel&report_type=' . urlencode($reportType) . '&start_date=' . urlencode($startDate) . '&end_date=' . urlencode($endDate)) ?>" class="btn btn-success font-bold font-md" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #28a745; border: none; color: #fff; padding: 10px 15px; border-radius: 4px;">
+                <i class="fa fa-file-excel"></i> Unduh Excel
+            </a>
+            <button onclick="window.print();" class="btn btn-secondary font-bold font-md" style="padding: 10px 15px; border-radius: 4px; border: 1px solid #ccc; background-color: #f8f9fa; color: #333; cursor: pointer;">
+                <i class="fa fa-print"></i> Cetak Laporan
             </button>
         </div>
     </div>

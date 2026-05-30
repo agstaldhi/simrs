@@ -21,6 +21,7 @@ class HrController extends Controller
 
         $search = $this->get('search', '');
         $status = $this->get('status', 'active');
+        $action = $this->get('action', 'list');
 
         $query = "SELECT * FROM v_employees_list WHERE 1=1";
         $params = [];
@@ -41,9 +42,20 @@ class HrController extends Controller
         $query .= " ORDER BY full_name ASC";
         $employees = Database::fetchAll($query, $params);
 
+        $departments = Database::fetchAll("SELECT id, name FROM departments ORDER BY name ASC");
+        
+        $editingEmployee = null;
+        if ($action === 'edit') {
+            $id = $this->get('id');
+            $editingEmployee = Database::fetchOne("SELECT * FROM employees WHERE id = ?", [$id]);
+        }
+
         $data = [
             'title' => 'Direktori Kepegawaian - SIMRS',
             'employees' => $employees,
+            'departments' => $departments,
+            'action' => $action,
+            'editingEmployee' => $editingEmployee,
             'filters' => [
                 'search' => $search,
                 'status' => $status
@@ -175,6 +187,8 @@ class HrController extends Controller
     {
         $this->requirePermission('hr.view_shifts');
 
+        $action = $this->get('action', 'list');
+
         $query = "SELECT es.*, e.full_name AS employee_name, e.employee_number, s.name AS shift_name, 
                          s.start_time, s.end_time, d.name AS department_name
                   FROM employee_shifts es
@@ -186,9 +200,15 @@ class HrController extends Controller
         
         $shifts = Database::fetchAll($query);
 
+        $employees = Database::fetchAll("SELECT id, full_name, employee_number FROM employees WHERE employment_status = 'active' ORDER BY full_name ASC");
+        $shiftTypes = Database::fetchAll("SELECT id, name, code, start_time, end_time FROM shifts WHERE is_active = 1 ORDER BY name ASC");
+
         $data = [
             'title' => 'Roster Shift Kerja Pegawai - SIMRS',
-            'shifts' => $shifts
+            'shifts' => $shifts,
+            'employees' => $employees,
+            'shiftTypes' => $shiftTypes,
+            'action' => $action
         ];
 
         $this->view('hr/views/shifts', $data);
@@ -201,13 +221,15 @@ class HrController extends Controller
     {
         $this->requirePermission('hr.view_leaves');
 
+        $action = $this->get('action', 'list');
+
         // Handle leaf approval/rejection
         if (isPost()) {
             $this->requirePermission('hr.manage_leaves');
             $this->requireCsrf();
 
             $leaveId = $this->post('leave_id');
-            $action = $this->post('action'); // approve or reject
+            $actionPost = $this->post('action'); // approve or reject
             $reason = $this->post('rejection_reason', '');
 
             $leave = Database::fetchOne("SELECT * FROM leaves WHERE id = ?", [$leaveId]);
@@ -221,7 +243,7 @@ class HrController extends Controller
                 $this->redirect('hr/leaves');
             }
 
-            $status = ($action === 'approve') ? 'approved' : 'rejected';
+            $status = ($actionPost === 'approve') ? 'approved' : 'rejected';
 
             try {
                 Database::update('leaves', [
@@ -255,12 +277,290 @@ class HrController extends Controller
              ORDER BY l.updated_at DESC LIMIT 50"
         );
 
+        $employees = Database::fetchAll("SELECT id, full_name, employee_number FROM employees WHERE employment_status = 'active' ORDER BY full_name ASC");
+
         $data = [
             'title' => 'Pengajuan Cuti Karyawan - SIMRS',
             'pendingLeaves' => $pendingLeaves,
-            'historyLeaves' => $historyLeaves
+            'historyLeaves' => $historyLeaves,
+            'employees' => $employees,
+            'action' => $action
         ];
 
         $this->view('hr/views/leaves', $data);
+    }
+
+    /**
+     * Store a new employee
+     */
+    public function storeEmployee()
+    {
+        $this->requirePermission('hr.create_employee');
+        $this->requireCsrf();
+
+        $fullName = $this->post('full_name');
+        $nik = $this->post('nik');
+        $birthPlace = $this->post('birth_place');
+        $birthDate = $this->post('birth_date');
+        $gender = $this->post('gender');
+        $position = $this->post('position');
+        $departmentId = $this->post('department_id') ?: null;
+        $joinDate = $this->post('join_date');
+        $employmentType = $this->post('employment_type', 'permanent');
+        $employmentStatus = $this->post('employment_status', 'active');
+        $email = $this->post('email');
+        $phone = $this->post('phone');
+
+        if (empty($fullName) || empty($nik) || empty($birthDate) || empty($position) || empty($joinDate)) {
+            $this->setFlash('error', 'Nama lengkap, NIK, tanggal lahir, jabatan, dan tanggal masuk wajib diisi.');
+            $this->redirect('hr/employees?action=add');
+        }
+
+        try {
+            $employeeNumber = generateDocumentNumber('EMP', 'employees', 'employee_number');
+            
+            $data = [
+                'employee_number' => $employeeNumber,
+                'nik' => $nik,
+                'full_name' => $fullName,
+                'birth_place' => $birthPlace,
+                'birth_date' => $birthDate,
+                'gender' => $gender,
+                'position' => $position,
+                'department_id' => $departmentId,
+                'join_date' => $joinDate,
+                'employment_type' => $employmentType,
+                'employment_status' => $employmentStatus,
+                'email' => $email,
+                'phone' => $phone,
+                'created_by' => Session::getUserId(),
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $employeeId = Database::insert('employees', $data);
+            $this->logAudit('create', 'hr', 'employees', $employeeId, "Menambahkan pegawai baru {$fullName} ({$employeeNumber})");
+            $this->setFlash('success', 'Pegawai berhasil didaftarkan.');
+        } catch (Exception $e) {
+            error_log("Error store employee: " . $e->getMessage());
+            $this->setFlash('error', 'Gagal mendaftarkan pegawai: ' . $e->getMessage());
+        }
+
+        $this->redirect('hr/employees');
+    }
+
+    /**
+     * Update an employee's data
+     */
+    public function updateEmployee($id)
+    {
+        $this->requirePermission('hr.edit_employee');
+        $this->requireCsrf();
+
+        $employee = Database::fetchOne("SELECT * FROM employees WHERE id = ?", [$id]);
+        if (!$employee) {
+            $this->setFlash('error', 'Data pegawai tidak ditemukan.');
+            $this->redirect('hr/employees');
+        }
+
+        $fullName = $this->post('full_name');
+        $nik = $this->post('nik');
+        $birthPlace = $this->post('birth_place');
+        $birthDate = $this->post('birth_date');
+        $gender = $this->post('gender');
+        $position = $this->post('position');
+        $departmentId = $this->post('department_id') ?: null;
+        $joinDate = $this->post('join_date');
+        $employmentType = $this->post('employment_type', 'permanent');
+        $employmentStatus = $this->post('employment_status', 'active');
+        $email = $this->post('email');
+        $phone = $this->post('phone');
+
+        if (empty($fullName) || empty($nik) || empty($birthDate) || empty($position) || empty($joinDate)) {
+            $this->setFlash('error', 'Nama lengkap, NIK, tanggal lahir, jabatan, dan tanggal masuk wajib diisi.');
+            $this->redirect("hr/employees?action=edit&id={$id}");
+        }
+
+        try {
+            Database::update('employees', [
+                'nik' => $nik,
+                'full_name' => $fullName,
+                'birth_place' => $birthPlace,
+                'birth_date' => $birthDate,
+                'gender' => $gender,
+                'position' => $position,
+                'department_id' => $departmentId,
+                'join_date' => $joinDate,
+                'employment_type' => $employmentType,
+                'employment_status' => $employmentStatus,
+                'email' => $email,
+                'phone' => $phone,
+                'updated_at' => date('Y-m-d H:i:s')
+            ], ['id' => $id]);
+
+            $this->logAudit('update', 'hr', 'employees', $id, "Memperbarui data pegawai {$fullName} ({$employee['employee_number']})");
+            $this->setFlash('success', 'Data pegawai berhasil diperbarui.');
+        } catch (Exception $e) {
+            error_log("Error update employee: " . $e->getMessage());
+            $this->setFlash('error', 'Gagal memperbarui data pegawai: ' . $e->getMessage());
+        }
+
+        $this->redirect('hr/employees');
+    }
+
+    /**
+     * Delete an employee
+     */
+    public function deleteEmployee($id)
+    {
+        $this->requirePermission('hr.delete_employee');
+        $this->requireCsrf();
+
+        $employee = Database::fetchOne("SELECT * FROM employees WHERE id = ?", [$id]);
+        if (!$employee) {
+            $this->setFlash('error', 'Data pegawai tidak ditemukan.');
+            $this->redirect('hr/employees');
+        }
+
+        try {
+            Database::delete('employees', ['id' => $id]);
+            $this->logAudit('delete', 'hr', 'employees', $id, "Menghapus pegawai {$employee['full_name']} ({$employee['employee_number']})");
+            $this->setFlash('success', 'Pegawai berhasil dihapus.');
+        } catch (Exception $e) {
+            error_log("Error delete employee: " . $e->getMessage());
+            $this->setFlash('error', 'Gagal menghapus pegawai (kemungkinan data terikat dengan tabel lain).');
+        }
+
+        $this->redirect('hr/employees');
+    }
+
+    /**
+     * Store employee shift schedule
+     */
+    public function storeShift()
+    {
+        $this->requirePermission('hr.manage_shifts');
+        $this->requireCsrf();
+
+        $employeeId = $this->post('employee_id');
+        $shiftId = $this->post('shift_id');
+        $shiftDate = $this->post('shift_date');
+        $notes = $this->post('notes', '');
+
+        if (empty($employeeId) || empty($shiftId) || empty($shiftDate)) {
+            $this->setFlash('error', 'Pegawai, shift, dan tanggal wajib dipilih.');
+            $this->redirect('hr/shifts?action=add');
+        }
+
+        try {
+            $exists = Database::fetchOne(
+                "SELECT id FROM employee_shifts WHERE employee_id = ? AND shift_date = ?",
+                [$employeeId, $shiftDate]
+            );
+
+            if ($exists) {
+                $this->setFlash('error', 'Pegawai sudah dijadwalkan pada tanggal tersebut.');
+                $this->redirect('hr/shifts?action=add');
+            }
+
+            $esId = Database::insert('employee_shifts', [
+                'employee_id' => $employeeId,
+                'shift_id' => $shiftId,
+                'shift_date' => $shiftDate,
+                'status' => 'scheduled',
+                'notes' => $notes,
+                'created_by' => Session::getUserId(),
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            $this->logAudit('create', 'hr', 'employee_shifts', $esId, "Menjadwalkan shift kerja untuk pegawai ID {$employeeId} tanggal {$shiftDate}");
+            $this->setFlash('success', 'Jadwal shift berhasil dibuat.');
+        } catch (Exception $e) {
+            error_log("Error store shift: " . $e->getMessage());
+            $this->setFlash('error', 'Gagal menyimpan jadwal shift: ' . $e->getMessage());
+        }
+
+        $this->redirect('hr/shifts');
+    }
+
+    /**
+     * Delete employee shift schedule
+     */
+    public function deleteShift($id)
+    {
+        $this->requirePermission('hr.manage_shifts');
+        $this->requireCsrf();
+
+        try {
+            $shift = Database::fetchOne("SELECT * FROM employee_shifts WHERE id = ?", [$id]);
+            if ($shift) {
+                Database::delete('employee_shifts', ['id' => $id]);
+                $this->logAudit('delete', 'hr', 'employee_shifts', $id, "Menghapus jadwal shift pegawai ID {$shift['employee_id']} tanggal {$shift['shift_date']}");
+                $this->setFlash('success', 'Jadwal shift berhasil dihapus.');
+            } else {
+                $this->setFlash('error', 'Jadwal shift tidak ditemukan.');
+            }
+        } catch (Exception $e) {
+            error_log("Error delete shift: " . $e->getMessage());
+            $this->setFlash('error', 'Gagal menghapus jadwal shift: ' . $e->getMessage());
+        }
+
+        $this->redirect('hr/shifts');
+    }
+
+    /**
+     * Store employee leave request
+     */
+    public function storeLeave()
+    {
+        $this->requirePermission('hr.manage_leaves');
+        $this->requireCsrf();
+
+        $employeeId = $this->post('employee_id');
+        $leaveType = $this->post('leave_type');
+        $startDate = $this->post('start_date');
+        $endDate = $this->post('end_date');
+        $reason = $this->post('reason');
+        $notes = $this->post('notes', '');
+
+        if (empty($employeeId) || empty($leaveType) || empty($startDate) || empty($endDate) || empty($reason)) {
+            $this->setFlash('error', 'Pegawai, tipe cuti, tanggal mulai/selesai, dan alasan wajib diisi.');
+            $this->redirect('hr/leaves?action=add');
+        }
+
+        try {
+            $start = new DateTime($startDate);
+            $end = new DateTime($endDate);
+            $interval = $start->diff($end);
+            $totalDays = $interval->days + 1;
+
+            if ($totalDays <= 0) {
+                $this->setFlash('error', 'Tanggal mulai harus sebelum atau sama dengan tanggal selesai.');
+                $this->redirect('hr/leaves?action=add');
+            }
+
+            $leaveNumber = generateDocumentNumber('LV', 'leaves', 'leave_number');
+
+            $leaveId = Database::insert('leaves', [
+                'employee_id' => $employeeId,
+                'leave_number' => $leaveNumber,
+                'leave_type' => $leaveType,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'total_days' => $totalDays,
+                'reason' => $reason,
+                'status' => 'pending',
+                'notes' => $notes,
+                'created_by' => Session::getUserId(),
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            $this->logAudit('create', 'hr', 'leaves', $leaveId, "Mengajukan cuti baru {$leaveNumber} untuk pegawai ID {$employeeId}");
+            $this->setFlash('success', 'Pengajuan cuti berhasil dikirim.');
+        } catch (Exception $e) {
+            error_log("Error store leave: " . $e->getMessage());
+            $this->setFlash('error', 'Gagal mengajukan cuti: ' . $e->getMessage());
+        }
+
+        $this->redirect('hr/leaves');
     }
 }

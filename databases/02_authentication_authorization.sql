@@ -85,6 +85,31 @@ CREATE TABLE user_roles (
     INDEX idx_role_id (role_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabel: rate_limits
+-- Menyimpan data rate limiting untuk mencegah abuse berdasarkan IP
+CREATE TABLE rate_limits (
+    ip_address VARCHAR(45) NOT NULL PRIMARY KEY,
+    request_count INT UNSIGNED NOT NULL DEFAULT 1,
+    reset_time INT UNSIGNED NOT NULL,
+    INDEX idx_reset_time (reset_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabel: sequences
+-- Menyimpan nomor urut untuk data rekam medis dan dokumen penting
+CREATE TABLE sequences (
+    sequence_key VARCHAR(100) NOT NULL PRIMARY KEY,
+    current_value INT UNSIGNED NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabel: migrations
+-- Melacak migrasi skema database yang sudah diterapkan
+CREATE TABLE migrations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    migration VARCHAR(255) NOT NULL UNIQUE,
+    batch INT NOT NULL,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- =====================================================
 -- Seed Data: Default Roles
 -- =====================================================
@@ -173,6 +198,11 @@ INSERT INTO permissions (name, display_name, module) VALUES
 ('inventory.edit', 'Edit Item Inventory', 'inventory'),
 ('inventory.delete', 'Hapus Item Inventory', 'inventory'),
 ('inventory.stock_opname', 'Stock Opname', 'inventory'),
+('inventory.view_items', 'Lihat Item Inventory', 'inventory'),
+('inventory.view_purchase_orders', 'Lihat Purchase Order', 'inventory'),
+('inventory.view_suppliers', 'Lihat Supplier', 'inventory'),
+('inventory.manage_suppliers', 'Kelola Supplier', 'inventory'),
+('inventory.view_stock_opname', 'Lihat Stock Opname', 'inventory'),
 
 -- HR & Employee
 ('hr.view_employees', 'Lihat Data Pegawai', 'hr'),
@@ -181,6 +211,10 @@ INSERT INTO permissions (name, display_name, module) VALUES
 ('hr.delete_employee', 'Hapus Pegawai', 'hr'),
 ('hr.manage_attendance', 'Kelola Absensi', 'hr'),
 ('hr.manage_shifts', 'Kelola Shift', 'hr'),
+('hr.view_attendance', 'Lihat Absensi', 'hr'),
+('hr.view_shifts', 'Lihat Shift', 'hr'),
+('hr.view_leaves', 'Lihat Cuti', 'hr'),
+('hr.manage_leaves', 'Kelola Cuti', 'hr'),
 
 -- Reports
 ('reports.view', 'Lihat Laporan', 'reports'),
@@ -290,7 +324,8 @@ WHERE name IN (
     'patients.view_detail',
     'pharmacy.view_prescriptions', 'pharmacy.dispense',
     'pharmacy.view_stock', 'pharmacy.manage_stock',
-    'inventory.view', 'inventory.create', 'inventory.edit'
+    'inventory.view', 'inventory.create', 'inventory.edit',
+    'inventory.view_items', 'inventory.view_purchase_orders', 'inventory.view_suppliers', 'inventory.manage_suppliers', 'inventory.view_stock_opname'
 );
 
 -- =====================================================
@@ -322,6 +357,7 @@ WHERE name IN (
     'dashboard.view',
     'hr.view_employees', 'hr.create_employee', 'hr.edit_employee',
     'hr.manage_attendance', 'hr.manage_shifts',
+    'hr.view_attendance', 'hr.view_shifts', 'hr.view_leaves', 'hr.manage_leaves',
     'reports.view'
 );
 

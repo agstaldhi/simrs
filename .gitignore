@@ -1,3 +1,41 @@
-.antigravitycli/*
+# Environment settings
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
+# Application storage & generated files
+/storage/backups/*
+!/storage/backups/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+# Composer dependencies
+/vendor/
+
+# PHPUnit cache
+.phpunit.result.cache
+.phpunit.cache/
+
+# Editor & IDE settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Project-specific / Agent files
+.antigravitycli/*
 *design.md

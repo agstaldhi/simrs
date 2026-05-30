@@ -159,6 +159,67 @@ function generateRandomString($length = 10)
 }
 
 /**
+ * Get the next sequential value for a key in a thread-safe way.
+ * Uses SELECT ... FOR UPDATE database row locking.
+ * 
+ * @param string $key
+ * @return int
+ */
+function getNextSequence($key)
+{
+    static $seqPdo = null;
+    if ($seqPdo === null) {
+        try {
+            $config = require __DIR__ . '/../../config/db.php';
+            $seqPdo = new PDO(
+                $config['dsn'],
+                $config['user'],
+                $config['pass'],
+                $config['options']
+            );
+            $seqPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch (Exception $e) {
+            error_log("Failed to create sequence DB connection: " . $e->getMessage());
+            // Fallback to default connection if separate connection fails
+            $seqPdo = Database::getConnection();
+        }
+    }
+
+    $isInTransaction = $seqPdo->inTransaction();
+    if (!$isInTransaction) {
+        $seqPdo->beginTransaction();
+    }
+
+    try {
+        // Use prepared statements on the separate connection
+        $stmtSelect = $seqPdo->prepare("SELECT current_value FROM sequences WHERE sequence_key = ? FOR UPDATE");
+        $stmtSelect->execute([$key]);
+        $row = $stmtSelect->fetch(PDO::FETCH_ASSOC);
+        
+        if ($row) {
+            $nextVal = intval($row['current_value']) + 1;
+            $stmtUpdate = $seqPdo->prepare("UPDATE sequences SET current_value = ? WHERE sequence_key = ?");
+            $stmtUpdate->execute([$nextVal, $key]);
+        } else {
+            $nextVal = 1;
+            $stmtInsert = $seqPdo->prepare("INSERT INTO sequences (sequence_key, current_value) VALUES (?, ?)");
+            $stmtInsert->execute([$key, $nextVal]);
+        }
+
+        if (!$isInTransaction) {
+            $seqPdo->commit();
+        }
+
+        return $nextVal;
+    } catch (Exception $e) {
+        if (!$isInTransaction) {
+            $seqPdo->rollBack();
+        }
+        throw $e;
+    }
+}
+
+/**
  * Generate medical record number
  * 
  * @return string
@@ -167,21 +228,8 @@ function generateMRN()
 {
     $prefix = 'RM';
     $year = date('Y');
-
-    // Get last MRN for this year
-    $query = "SELECT medical_record_number FROM patients 
-              WHERE medical_record_number LIKE ? 
-              ORDER BY id DESC LIMIT 1";
-
-    $result = Database::fetchOne($query, ["{$prefix}-{$year}-%"]);
-
-    if ($result) {
-        // Extract number and increment
-        preg_match('/-(\d+)$/', $result['medical_record_number'], $matches);
-        $number = isset($matches[1]) ? intval($matches[1]) + 1 : 1;
-    } else {
-        $number = 1;
-    }
+    $sequenceKey = "mrn_{$prefix}_{$year}";
+    $number = getNextSequence($sequenceKey);
 
     return sprintf("%s-%s-%04d", $prefix, $year, $number);
 }
@@ -197,19 +245,8 @@ function generateMRN()
 function generateDocumentNumber($prefix, $table, $column)
 {
     $year = date('Y');
-
-    $query = "SELECT {$column} FROM {$table} 
-              WHERE {$column} LIKE ? 
-              ORDER BY id DESC LIMIT 1";
-
-    $result = Database::fetchOne($query, ["{$prefix}-{$year}-%"]);
-
-    if ($result) {
-        preg_match('/-(\d+)$/', $result[$column], $matches);
-        $number = isset($matches[1]) ? intval($matches[1]) + 1 : 1;
-    } else {
-        $number = 1;
-    }
+    $sequenceKey = "doc_{$prefix}_{$table}_{$column}_{$year}";
+    $number = getNextSequence($sequenceKey);
 
     return sprintf("%s-%s-%04d", $prefix, $year, $number);
 }
@@ -469,17 +506,7 @@ function pluralize($count, $singular, $plural = null)
  */
 function getClientIP()
 {
-    $ip = '';
-
-    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-        $ip = $_SERVER['HTTP_CLIENT_IP'];
-    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-    } else {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-    }
-
-    return $ip;
+    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 }
 
 /**
